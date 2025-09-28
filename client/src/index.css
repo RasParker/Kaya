@@ -1,0 +1,175 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(0 0% 100%);
+  --foreground: hsl(240 10% 3.9%);
+  --card: hsl(0 0% 100%);
+  --card-foreground: hsl(240 10% 3.9%);
+  --popover: hsl(0 0% 100%);
+  --popover-foreground: hsl(240 10% 3.9%);
+  --primary: hsl(142 76% 36%);
+  --primary-foreground: hsl(355.7 100% 97.3%);
+  --secondary: hsl(20 91% 48%);
+  --secondary-foreground: hsl(0 0% 100%);
+  --muted: hsl(210 40% 96%);
+  --muted-foreground: hsl(215.4 16.3% 46.9%);
+  --accent: hsl(217 91% 40%);
+  --accent-foreground: hsl(210 40% 98%);
+  --destructive: hsl(0 84% 60%);
+  --destructive-foreground: hsl(210 40% 98%);
+  --border: hsl(214.3 31.8% 91.4%);
+  --input: hsl(214.3 31.8% 91.4%);
+  --ring: hsl(142 76% 36%);
+  --chart-1: hsl(142 76% 36%);
+  --chart-2: hsl(159.7826 100% 36.0784%);
+  --chart-3: hsl(42.0290 92.8251% 56.2745%);
+  --chart-4: hsl(147.1429 78.5047% 41.9608%);
+  --chart-5: hsl(341.4894 75.2000% 50.9804%);
+  --sidebar: hsl(210 40% 96%);
+  --sidebar-foreground: hsl(240 10% 3.9%);
+  --sidebar-primary: hsl(142 76% 36%);
+  --sidebar-primary-foreground: hsl(355.7 100% 97.3%);
+  --sidebar-accent: hsl(217 91% 40%);
+  --sidebar-accent-foreground: hsl(210 40% 98%);
+  --sidebar-border: hsl(214.3 31.8% 91.4%);
+  --sidebar-ring: hsl(142 76% 36%);
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-serif: Georgia, serif;
+  --font-mono: Menlo, monospace;
+  --radius: 0.5rem;
+  --shadow-2xs: 0px 2px 0px 0px hsl(142 76% 36% / 0.00);
+  --shadow-xs: 0px 2px 0px 0px hsl(142 76% 36% / 0.00);
+  --shadow-sm: 0px 2px 0px 0px hsl(142 76% 36% / 0.00), 0px 1px 2px -1px hsl(142 76% 36% / 0.00);
+  --shadow: 0px 2px 0px 0px hsl(142 76% 36% / 0.00), 0px 1px 2px -1px hsl(142 76% 36% / 0.00);
+  --shadow-md: 0px 2px 0px 0px hsl(142 76% 36% / 0.00), 0px 2px 4px -1px hsl(142 76% 36% / 0.00);
+  --shadow-lg: 0px 2px 0px 0px hsl(142 76% 36% / 0.00), 0px 4px 6px -1px hsl(142 76% 36% / 0.00);
+  --shadow-xl: 0px 2px 0px 0px hsl(142 76% 36% / 0.00), 0px 8px 10px -1px hsl(142 76% 36% / 0.00);
+  --shadow-2xl: 0px 2px 0px 0px hsl(142 76% 36% / 0.00);
+  --tracking-normal: 0em;
+  --spacing: 0.25rem;
+}
+
+.dark {
+  --background: hsl(0 0% 0%);
+  --foreground: hsl(200 6.6667% 91.1765%);
+  --card: hsl(228 9.8039% 10%);
+  --card-foreground: hsl(0 0% 85.0980%);
+  --popover: hsl(0 0% 0%);
+  --popover-foreground: hsl(200 6.6667% 91.1765%);
+  --primary: hsl(142 76% 36%);
+  --primary-foreground: hsl(355.7 100% 97.3%);
+  --secondary: hsl(20 91% 48%);
+  --secondary-foreground: hsl(0 0% 100%);
+  --muted: hsl(0 0% 9.4118%);
+  --muted-foreground: hsl(210 3.3898% 46.2745%);
+  --accent: hsl(217 91% 40%);
+  --accent-foreground: hsl(210 40% 98%);
+  --destructive: hsl(0 84% 60%);
+  --destructive-foreground: hsl(210 40% 98%);
+  --border: hsl(210 5.2632% 14.9020%);
+  --input: hsl(207.6923 27.6596% 18.4314%);
+  --ring: hsl(142 76% 36%);
+  --chart-1: hsl(142 76% 36%);
+  --chart-2: hsl(159.7826 100% 36.0784%);
+  --chart-3: hsl(42.0290 92.8251% 56.2745%);
+  --chart-4: hsl(147.1429 78.5047% 41.9608%);
+  --chart-5: hsl(341.4894 75.2000% 50.9804%);
+  --sidebar: hsl(228 9.8039% 10%);
+  --sidebar-foreground: hsl(0 0% 85.0980%);
+  --sidebar-primary: hsl(142 76% 36%);
+  --sidebar-primary-foreground: hsl(355.7 100% 97.3%);
+  --sidebar-accent: hsl(217 91% 40%);
+  --sidebar-accent-foreground: hsl(210 40% 98%);
+  --sidebar-border: hsl(210 5.2632% 14.9020%);
+  --sidebar-ring: hsl(142 76% 36%);
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-serif: Georgia, serif;
+  --font-mono: Menlo, monospace;
+  --radius: 0.5rem;
+  --shadow-2xs: 0px 2px 0px 0px hsl(142 76% 36% / 0.00);
+  --shadow-xs: 0px 2px 0px 0px hsl(142 76% 36% / 0.00);
+  --shadow-sm: 0px 2px 0px 0px hsl(142 76% 36% / 0.00), 0px 1px 2px -1px hsl(142 76% 36% / 0.00);
+  --shadow: 0px 2px 0px 0px hsl(142 76% 36% / 0.00), 0px 1px 2px -1px hsl(142 76% 36% / 0.00);
+  --shadow-md: 0px 2px 0px 0px hsl(142 76% 36% / 0.00), 0px 2px 4px -1px hsl(142 76% 36% / 0.00);
+  --shadow-lg: 0px 2px 0px 0px hsl(142 76% 36% / 0.00), 0px 4px 6px -1px hsl(142 76% 36% / 0.00);
+  --shadow-xl: 0px 2px 0px 0px hsl(142 76% 36% / 0.00), 0px 8px 10px -1px hsl(142 76% 36% / 0.00);
+  --shadow-2xl: 0px 2px 0px 0px hsl(142 76% 36% / 0.00);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+}
+
+.screen-container {
+  max-width: 414px;
+  margin: 0 auto;
+  min-height: 100vh;
+  background: var(--background);
+  position: relative;
+  box-shadow: 0 0 20px rgba(0,0,0,0.1);
+}
+
+.status-bar {
+  height: 44px;
+  background: var(--card);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 414px;
+  background: var(--card);
+  border-top: 1px solid var(--border);
+  z-index: 50;
+}
+
+.seller-card {
+  transition: all 0.2s ease;
+}
+
+.seller-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.category-chip {
+  transition: all 0.2s ease;
+}
+
+.category-chip:hover {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.cart-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: var(--destructive);
+  color: var(--destructive-foreground);
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

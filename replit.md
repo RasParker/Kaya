@@ -1,0 +1,85 @@
+# Overview
+
+This is a marketplace application called "rest-express" designed for connecting buyers with sellers in Ghana's markets, particularly Makola Market. The platform supports multiple user types including buyers, sellers, kayayo (market porters), and riders, creating a comprehensive ecosystem for local market commerce and delivery services.
+
+# User Preferences
+
+Preferred communication style: Simple, everyday language.
+
+# System Architecture
+
+## Full-Stack Architecture
+
+The application follows a modern full-stack architecture with a React frontend and Express.js backend, using TypeScript throughout for type safety.
+
+**Frontend Framework**: React with TypeScript, using Vite as the build tool and development server. The client-side routing is handled by Wouter for lightweight navigation.
+
+**Backend Framework**: Express.js server with TypeScript, featuring RESTful API endpoints and WebSocket support for real-time updates.
+
+**Development Setup**: The project uses a monorepo structure with shared TypeScript schemas between client and server, enabling consistent data types across the full stack.
+
+## Database Layer
+
+**ORM and Database**: Drizzle ORM with PostgreSQL as the primary database, configured through Neon Database serverless connections for scalable cloud deployment.
+
+**Schema Design**: The database schema includes tables for users, sellers, products, cart items, orders, reviews, and kayayo availability. All tables use UUID primary keys for better distribution and security.
+
+**Migrations**: Database schema changes are managed through Drizzle migrations with a dedicated configuration file.
+
+## Authentication and Authorization
+
+**JWT Authentication**: JSON Web Tokens are used for stateless authentication, with tokens stored in localStorage on the client side.
+
+**User Types**: The system supports four distinct user roles (buyer, seller, kayayo, rider) with role-based access control implemented throughout the application.
+
+**Session Management**: Authentication state is managed through React Context, providing global access to user information and authentication status.
+
+## Real-Time Communication
+
+**WebSocket Integration**: WebSocket server implementation for real-time updates, particularly useful for order status changes and availability updates.
+
+**Client Connection Management**: WebSocket connections are managed per user with automatic reconnection handling.
+
+## UI Component System
+
+**Design System**: ShadCN UI components with Radix UI primitives, providing a consistent and accessible interface.
+
+**Styling**: Tailwind CSS for utility-first styling with a custom design token system including CSS variables for theming.
+
+**Mobile-First Design**: Responsive design optimized for mobile devices with dedicated mobile layout components.
+
+## State Management
+
+**Server State**: TanStack React Query for server state management, caching, and background updates.
+
+**Client State**: React's built-in state management with Context API for global state like authentication.
+
+**Form Handling**: React Hook Form with Zod schema validation for type-safe form management.
+
+## API Architecture
+
+**RESTful Design**: Standard REST endpoints for CRUD operations on all entities.
+
+**Type Safety**: Shared TypeScript schemas ensure consistent data structures between client and server.
+
+**Error Handling**: Centralized error handling with proper HTTP status codes and structured error responses.
+
+# External Dependencies
+
+**Database Service**: Neon Database (@neondatabase/serverless) for PostgreSQL hosting with serverless scaling capabilities.
+
+**UI Component Library**: Extensive use of Radix UI primitives for accessible, unstyled components that are then styled with custom CSS.
+
+**Development Tools**: Vite for fast development builds, PostCSS for CSS processing, and ESBuild for production bundling.
+
+**Form Validation**: Zod for runtime type checking and schema validation, integrated with React Hook Form for seamless form handling.
+
+**Date Handling**: date-fns library for date manipulation and formatting utilities.
+
+**Authentication**: jsonwebtoken for JWT token creation and verification on the server side.
+
+**Real-time Communication**: WebSocket (ws) library for server-side WebSocket implementation.
+
+**Session Storage**: connect-pg-simple for PostgreSQL-based session storage when needed.
+
+**Utility Libraries**: clsx and tailwind-merge for conditional CSS class handling, class-variance-authority for component variant management.

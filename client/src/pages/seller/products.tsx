@@ -1,0 +1,458 @@
+import { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
+import { useLocation } from "wouter";
+import { useAuth } from "@/lib/auth.tsx";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { apiRequest } from "@/lib/queryClient";
+import MobileLayout from "@/components/layout/mobile-layout";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
+import { ArrowLeft, Plus, Edit, Trash2, Package } from "lucide-react";
+
+const productSchema = z.object({
+  name: z.string().min(1, "Product name is required"),
+  category: z.string().min(1, "Category is required"),
+  unit: z.string().min(1, "Unit is required"),
+  price: z.string().min(0, "Price must be positive"),
+  description: z.string().optional(),
+  isAvailable: z.boolean().default(true),
+  allowSubstitution: z.boolean().default(true),
+});
+
+type ProductForm = z.infer<typeof productSchema>;
+
+const categories = [
+  { value: "vegetables", label: "Vegetables" },
+  { value: "roots", label: "Roots & Tubers" },
+  { value: "fish", label: "Fish & Seafood" },
+  { value: "spices", label: "Spices" },
+  { value: "household", label: "Household Items" },
+];
+
+const units = [
+  { value: "per piece", label: "Per Piece" },
+  { value: "per basket", label: "Per Basket" },
+  { value: "per kg", label: "Per Kilogram" },
+  { value: "per bunch", label: "Per Bunch" },
+  { value: "per tuber", label: "Per Tuber" },
+];
+
+export default function SellerProducts() {
+  const [, setLocation] = useLocation();
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<any>(null);
+
+  // Get seller info
+  const { data: seller } = useQuery({
+    queryKey: ["/api/sellers", { userId: user?.id }],
+    enabled: !!user,
+  });
+
+  const sellerId = seller?.id;
+
+  const { data: products = [], isLoading } = useQuery({
+    queryKey: ["/api/products", { sellerId }],
+    enabled: !!sellerId,
+  });
+
+  const form = useForm<ProductForm>({
+    resolver: zodResolver(productSchema),
+    defaultValues: {
+      name: "",
+      category: "",
+      unit: "",
+      price: "",
+      description: "",
+      isAvailable: true,
+      allowSubstitution: true,
+    },
+  });
+
+  const createProductMutation = useMutation({
+    mutationFn: async (data: ProductForm) => {
+      const response = await apiRequest("POST", "/api/products", {
+        ...data,
+        sellerId,
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      toast({
+        title: "Product added",
+        description: "Your product has been added successfully.",
+      });
+      setIsDialogOpen(false);
+      form.reset();
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to add product. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateProductMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<ProductForm> }) => {
+      const response = await apiRequest("PATCH", `/api/products/${id}`, data);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      toast({
+        title: "Product updated",
+        description: "Your product has been updated successfully.",
+      });
+      setEditingProduct(null);
+      setIsDialogOpen(false);
+      form.reset();
+    },
+  });
+
+  const deleteProductMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await apiRequest("DELETE", `/api/products/${id}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      toast({
+        title: "Product deleted",
+        description: "Your product has been deleted successfully.",
+      });
+    },
+  });
+
+  const onSubmit = (data: ProductForm) => {
+    if (editingProduct) {
+      updateProductMutation.mutate({ id: editingProduct.id, data });
+    } else {
+      createProductMutation.mutate(data);
+    }
+  };
+
+  const handleEdit = (product: any) => {
+    setEditingProduct(product);
+    form.reset({
+      name: product.name,
+      category: product.category,
+      unit: product.unit,
+      price: product.price,
+      description: product.description || "",
+      isAvailable: product.isAvailable,
+      allowSubstitution: product.allowSubstitution,
+    });
+    setIsDialogOpen(true);
+  };
+
+  const handleAdd = () => {
+    setEditingProduct(null);
+    form.reset();
+    setIsDialogOpen(true);
+  };
+
+  if (!user || user.userType !== 'seller') {
+    setLocation('/login');
+    return null;
+  }
+
+  return (
+    <MobileLayout>
+      {/* Header */}
+      <header className="bg-card border-b border-border p-4">
+        <div className="flex items-center gap-3 mb-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setLocation("/seller/dashboard")}
+            data-testid="button-back"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <h1 className="text-xl font-semibold">My Products</h1>
+        </div>
+
+        <Button 
+          className="w-full" 
+          onClick={handleAdd}
+          data-testid="button-add-product"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Add New Product
+        </Button>
+      </header>
+
+      {/* Products List */}
+      <main className="p-4 pb-20">
+        {isLoading ? (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">Loading products...</p>
+          </div>
+        ) : products.length === 0 ? (
+          <div className="text-center py-12">
+            <Package className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+            <h2 className="text-lg font-semibold mb-2">No products yet</h2>
+            <p className="text-muted-foreground mb-4">
+              Add your first product to start selling
+            </p>
+            <Button onClick={handleAdd} data-testid="button-add-first-product">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Product
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {products.map((product: any) => (
+              <Card key={product.id} data-testid={`product-card-${product.id}`}>
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1">
+                      <h3 className="font-semibold" data-testid={`product-name-${product.id}`}>
+                        {product.name}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        {product.category} • {product.unit}
+                      </p>
+                      {product.description && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {product.description}
+                        </p>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold text-primary" data-testid={`product-price-${product.id}`}>
+                        ₵{parseFloat(product.price).toFixed(2)}
+                      </p>
+                      <Badge 
+                        variant={product.isAvailable ? "default" : "secondary"}
+                        className={`text-xs ${
+                          product.isAvailable 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-red-100 text-red-800'
+                        }`}
+                      >
+                        {product.isAvailable ? 'Available' : 'Out of Stock'}
+                      </Badge>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">
+                        Substitution: {product.allowSubstitution ? 'Yes' : 'No'}
+                      </span>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEdit(product)}
+                        data-testid={`button-edit-${product.id}`}
+                      >
+                        <Edit className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => deleteProductMutation.mutate(product.id)}
+                        disabled={deleteProductMutation.isPending}
+                        data-testid={`button-delete-${product.id}`}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </main>
+
+      {/* Add/Edit Product Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="w-full max-w-md mx-4">
+          <DialogHeader>
+            <DialogTitle>
+              {editingProduct ? 'Edit Product' : 'Add New Product'}
+            </DialogTitle>
+          </DialogHeader>
+
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Product Name</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="e.g., Fresh Tomatoes" data-testid="input-product-name" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="category"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Category</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger data-testid="select-category">
+                          <SelectValue placeholder="Select category" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {categories.map((category) => (
+                          <SelectItem key={category.value} value={category.value}>
+                            {category.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="unit"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Unit</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger data-testid="select-unit">
+                            <SelectValue placeholder="Select unit" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {units.map((unit) => (
+                            <SelectItem key={unit.value} value={unit.value}>
+                              {unit.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="price"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Price (₵)</FormLabel>
+                      <FormControl>
+                        <Input 
+                          {...field} 
+                          type="number" 
+                          step="0.01" 
+                          placeholder="0.00" 
+                          data-testid="input-price"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description (Optional)</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="Brief description..." data-testid="input-description" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="space-y-3">
+                <FormField
+                  control={form.control}
+                  name="isAvailable"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center justify-between">
+                      <FormLabel>Available for sale</FormLabel>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          data-testid="switch-available"
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="allowSubstitution"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center justify-between">
+                      <FormLabel>Allow substitution</FormLabel>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          data-testid="switch-substitution"
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setIsDialogOpen(false)}
+                  data-testid="button-cancel"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  className="flex-1"
+                  disabled={createProductMutation.isPending || updateProductMutation.isPending}
+                  data-testid="button-save-product"
+                >
+                  {editingProduct ? 'Update' : 'Add'} Product
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+    </MobileLayout>
+  );
+}
