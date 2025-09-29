@@ -68,10 +68,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userData = insertUserSchema.parse(req.body);
       
-      // Check if user already exists
-      const existingUser = await storage.getUserByPhone(userData.phone);
-      if (existingUser) {
-        return res.status(400).json({ message: "User already exists" });
+      // SECURITY: Prevent public admin creation
+      if (userData.userType === 'admin') {
+        return res.status(403).json({ message: "Admin accounts cannot be created through public registration" });
+      }
+
+      // Validate at least one identifier exists
+      if (!userData.phone && !userData.email) {
+        return res.status(400).json({ message: "Either phone or email is required" });
+      }
+      
+      // Check if user already exists by phone
+      if (userData.phone) {
+        const existingUser = await storage.getUserByPhone(userData.phone);
+        if (existingUser) {
+          return res.status(400).json({ message: "User with this phone already exists" });
+        }
+      }
+
+      // Check if user already exists by email
+      if (userData.email) {
+        const existingUser = await storage.getUserByEmail(userData.email);
+        if (existingUser) {
+          return res.status(400).json({ message: "User with this email already exists" });
+        }
       }
 
       // Hash password before storing
@@ -121,9 +141,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/auth/login", async (req, res) => {
     try {
-      const { phone, password } = req.body;
+      const { phone, email, password } = req.body;
       
-      const user = await storage.getUserByPhone(phone);
+      // Determine login method (phone or email)
+      let user;
+      if (email) {
+        user = await storage.getUserByEmail(email);
+      } else if (phone) {
+        user = await storage.getUserByPhone(phone);
+      } else {
+        return res.status(400).json({ message: "Either phone or email is required" });
+      }
+
       if (!user) {
         return res.status(401).json({ message: "Invalid credentials" });
       }

@@ -27,6 +27,7 @@ export interface IStorage {
   // Users
   getUser(id: string): Promise<User | undefined>;
   getUserByPhone(phone: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, user: Partial<User>): Promise<User | undefined>;
   getUsersByType(userType: string): Promise<User[]>;
@@ -113,6 +114,7 @@ export class MemStorage implements IStorage {
     const buyer: User = {
       id: buyerId,
       phone: "+233244123456",
+      email: null,
       name: "John Mensah",
       userType: "buyer",
       password: bcrypt.hashSync("password123", saltRounds),
@@ -125,11 +127,30 @@ export class MemStorage implements IStorage {
     };
     this.users.set(buyerId, buyer);
 
+    // Create admin user
+    const adminId = randomUUID();
+    const admin: User = {
+      id: adminId,
+      phone: null,
+      email: "admin@makolaconnect.com",
+      name: "System Administrator",
+      userType: "admin",
+      password: bcrypt.hashSync("admin123", saltRounds),
+      profileImage: null,
+      isVerified: true,
+      isOnline: true,
+      rating: "0.00",
+      totalOrders: 0,
+      createdAt: new Date(),
+    };
+    this.users.set(adminId, admin);
+
     // Create sample sellers
     const sellerId1 = randomUUID();
     const seller1: User = {
       id: sellerId1,
       phone: "+233244987654",
+      email: null,
       name: "Auntie Akosua",
       userType: "seller",
       password: bcrypt.hashSync("password123", saltRounds),
@@ -146,6 +167,7 @@ export class MemStorage implements IStorage {
     const seller2: User = {
       id: sellerId2,
       phone: "+233244777888",
+      email: null,
       name: "Uncle Kwame",
       userType: "seller",
       password: bcrypt.hashSync("password123", saltRounds),
@@ -162,6 +184,7 @@ export class MemStorage implements IStorage {
     const seller3: User = {
       id: sellerId3,
       phone: "+233244999000",
+      email: null,
       name: "Mama Ama",
       userType: "seller",
       password: bcrypt.hashSync("password123", saltRounds),
@@ -351,6 +374,7 @@ export class MemStorage implements IStorage {
       const kayayoUser: User = {
         id: kayayoId,
         phone: kayayo.phone,
+        email: null,
         name: kayayo.name,
         userType: "kayayo",
         password: bcrypt.hashSync("password123", saltRounds),
@@ -396,6 +420,7 @@ export class MemStorage implements IStorage {
       const riderUser: User = {
         id: riderId,
         phone: rider.phone,
+        email: null,
         name: rider.name,
         userType: "rider",
         password: bcrypt.hashSync("password123", saltRounds),
@@ -684,11 +709,17 @@ export class MemStorage implements IStorage {
     return Array.from(this.users.values()).find(user => user.phone === phone);
   }
 
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(user => user.email === email);
+  }
+
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = randomUUID();
     const user: User = { 
       ...insertUser, 
       id, 
+      phone: insertUser.phone || null,
+      email: insertUser.email || null,
       rating: "0.00",
       totalOrders: 0,
       createdAt: new Date(),
@@ -1006,6 +1037,11 @@ export class PostgresStorage implements IStorage {
 
   async getUserByPhone(phone: string): Promise<User | undefined> {
     const result = await this.db.select().from(schema.users).where(eq(schema.users.phone, phone)).limit(1);
+    return result[0];
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const result = await this.db.select().from(schema.users).where(eq(schema.users.email, email)).limit(1);
     return result[0];
   }
 

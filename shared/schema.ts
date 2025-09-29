@@ -6,9 +6,10 @@ import { z } from "zod";
 // Users table for all user types
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  phone: text("phone").notNull().unique(),
+  phone: text("phone").unique(),
+  email: text("email").unique(),
   name: text("name").notNull(),
-  userType: text("user_type").notNull(), // 'buyer', 'seller', 'kayayo', 'rider'
+  userType: text("user_type").notNull(), // 'buyer', 'seller', 'kayayo', 'rider', 'admin'
   password: text("password").notNull(),
   profileImage: text("profile_image"),
   isVerified: boolean("is_verified").default(false),
