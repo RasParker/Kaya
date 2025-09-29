@@ -25,6 +25,34 @@ export default function HomePage() {
   const [selectedCategory, setSelectedCategory] = useState("Vegetables");
   const [searchQuery, setSearchQuery] = useState("");
   
+  // Role-based redirection for authenticated users
+  if (isAuthenticated && user) {
+    switch (user.userType) {
+      case 'seller':
+        setLocation('/seller/dashboard');
+        return null;
+      case 'kayayo':
+        setLocation('/kayayo/dashboard');
+        return null;
+      case 'rider':
+        setLocation('/rider/dashboard');
+        return null;
+      case 'buyer':
+        // Continue to render buyer home page
+        break;
+      default:
+        // For any unknown user types, redirect to login
+        setLocation('/login');
+        return null;
+    }
+  }
+
+  // If not authenticated, redirect to login
+  if (!isAuthenticated) {
+    setLocation("/login");
+    return null;
+  }
+  
   const { data: sellers = [] } = useQuery({
     queryKey: ["/api/sellers"],
     enabled: true,
@@ -37,21 +65,16 @@ export default function HomePage() {
 
   const { data: orders = [] } = useQuery({
     queryKey: ["/api/orders"],
-    enabled: isAuthenticated,
+    enabled: isAuthenticated && user?.userType === 'buyer',
   });
 
   const { data: cartItems = [] } = useQuery({
     queryKey: ["/api/cart"],
-    enabled: isAuthenticated,
+    enabled: isAuthenticated && user?.userType === 'buyer',
   });
 
-  if (!isAuthenticated) {
-    setLocation("/login");
-    return null;
-  }
-
-  const recentOrders = orders.slice(0, 2);
-  const cartItemCount = cartItems.length;
+  const recentOrders = Array.isArray(orders) ? orders.slice(0, 2) : [];
+  const cartItemCount = Array.isArray(cartItems) ? cartItems.length : 0;
 
   return (
     <MobileLayout>
@@ -143,13 +166,13 @@ export default function HomePage() {
           </div>
           
           <div className="space-y-3">
-            {sellers.slice(0, 3).map((seller: any) => (
+            {Array.isArray(sellers) ? sellers.slice(0, 3).map((seller: any) => (
               <SellerCard 
                 key={seller.id} 
                 seller={seller} 
                 onClick={() => setLocation(`/browse?seller=${seller.id}`)}
               />
-            ))}
+            )) : null}
           </div>
         </section>
 
@@ -158,14 +181,14 @@ export default function HomePage() {
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-lg font-semibold">Available Kayayei</h2>
             <span className="text-xs text-muted-foreground" data-testid="text-kayayo-count">
-              {kayayos.length} available now
+              {Array.isArray(kayayos) ? kayayos.length : 0} available now
             </span>
           </div>
           
           <div className="flex gap-3 overflow-x-auto pb-2">
-            {kayayos.slice(0, 5).map((kayayo: any) => (
+            {Array.isArray(kayayos) ? kayayos.slice(0, 5).map((kayayo: any) => (
               <KayayoCard key={kayayo.id} kayayo={kayayo} />
-            ))}
+            )) : null}
           </div>
         </section>
 
