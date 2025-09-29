@@ -318,17 +318,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/orders", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    console.log("Order creation started for user:", req.user!.userId);
+    console.log("Request body:", JSON.stringify(req.body));
     try {
+      // Get cart items to calculate total amount
+      const cartItems = await storage.getCartItems(req.user!.userId);
+      console.log("Cart items found:", cartItems.length);
+      
+      if (cartItems.length === 0) {
+        return res.status(400).json({ message: "Cart is empty" });
+      }
+      
+      // Calculate total amount from cart items
+      let totalAmount = 0;
+      for (const cartItem of cartItems) {
+        const product = await storage.getProduct(cartItem.productId);
+        if (product) {
+          const itemTotal = parseFloat(product.price) * cartItem.quantity;
+          console.log(`Product ${product.name}: ${product.price} x ${cartItem.quantity} = ${itemTotal}`);
+          totalAmount += itemTotal;
+        } else {
+          console.log(`Product not found for ID: ${cartItem.productId}`);
+        }
+      }
+      console.log(`Total amount calculated: ${totalAmount}`);
+      
       const orderData = insertOrderSchema.parse({
         ...req.body,
-        buyerId: req.user!.userId
+        buyerId: req.user!.userId,
+        totalAmount: totalAmount.toString()
       });
       
       const order = await storage.createOrder(orderData);
       
       // Create order items from cart
-      const cartItems = await storage.getCartItems(req.user!.userId);
-      
       for (const cartItem of cartItems) {
         const product = await storage.getProduct(cartItem.productId);
         if (product) {
@@ -358,7 +381,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(order);
     } catch (error) {
-      res.status(400).json({ message: "Invalid order data" });
+      console.error("Order creation error:", error);
+      if (error instanceof Error) {
+        console.error("Error message:", error.message);
+        console.error("Error stack:", error.stack);
+      }
+      res.status(400).json({ 
+        message: "Invalid order data", 
+        error: error instanceof Error ? error.message : "Unknown error",
+        details: error
+      });
     }
   });
 
