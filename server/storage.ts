@@ -18,6 +18,10 @@ import {
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import bcrypt from "bcrypt";
+import { drizzle } from 'drizzle-orm/neon-http';
+import { neon } from '@neondatabase/serverless';
+import { eq, like, and } from 'drizzle-orm';
+import * as schema from '@shared/schema';
 
 export interface IStorage {
   // Users
@@ -983,4 +987,248 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export class PostgresStorage implements IStorage {
+  private db: ReturnType<typeof drizzle>;
+
+  constructor() {
+    if (!process.env.DATABASE_URL) {
+      throw new Error('DATABASE_URL is required for PostgreSQL storage');
+    }
+    const sql = neon(process.env.DATABASE_URL);
+    this.db = drizzle(sql, { schema });
+  }
+
+  // Users
+  async getUser(id: string): Promise<User | undefined> {
+    const result = await this.db.select().from(schema.users).where(eq(schema.users.id, id)).limit(1);
+    return result[0];
+  }
+
+  async getUserByPhone(phone: string): Promise<User | undefined> {
+    const result = await this.db.select().from(schema.users).where(eq(schema.users.phone, phone)).limit(1);
+    return result[0];
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const result = await this.db.insert(schema.users).values(insertUser).returning();
+    return result[0];
+  }
+
+  async updateUser(id: string, userUpdate: Partial<User>): Promise<User | undefined> {
+    const result = await this.db.update(schema.users).set(userUpdate).where(eq(schema.users.id, id)).returning();
+    return result[0];
+  }
+
+  async getUsersByType(userType: string): Promise<User[]> {
+    return await this.db.select().from(schema.users).where(eq(schema.users.userType, userType));
+  }
+
+  // Sellers
+  async getSeller(id: string): Promise<Seller | undefined> {
+    const result = await this.db.select().from(schema.sellers).where(eq(schema.sellers.id, id)).limit(1);
+    return result[0];
+  }
+
+  async getSellerByUserId(userId: string): Promise<Seller | undefined> {
+    const result = await this.db.select().from(schema.sellers).where(eq(schema.sellers.userId, userId)).limit(1);
+    return result[0];
+  }
+
+  async createSeller(insertSeller: InsertSeller): Promise<Seller> {
+    const result = await this.db.insert(schema.sellers).values(insertSeller).returning();
+    return result[0];
+  }
+
+  async updateSeller(id: string, sellerUpdate: Partial<Seller>): Promise<Seller | undefined> {
+    const result = await this.db.update(schema.sellers).set(sellerUpdate).where(eq(schema.sellers.id, id)).returning();
+    return result[0];
+  }
+
+  async getSellersByMarket(market: string): Promise<Seller[]> {
+    return await this.db.select().from(schema.sellers).where(eq(schema.sellers.market, market));
+  }
+
+  // Products
+  async getProduct(id: string): Promise<Product | undefined> {
+    const result = await this.db.select().from(schema.products).where(eq(schema.products.id, id)).limit(1);
+    return result[0];
+  }
+
+  async createProduct(insertProduct: InsertProduct): Promise<Product> {
+    const result = await this.db.insert(schema.products).values(insertProduct).returning();
+    return result[0];
+  }
+
+  async updateProduct(id: string, productUpdate: Partial<Product>): Promise<Product | undefined> {
+    const result = await this.db.update(schema.products).set(productUpdate).where(eq(schema.products.id, id)).returning();
+    return result[0];
+  }
+
+  async deleteProduct(id: string): Promise<boolean> {
+    const result = await this.db.delete(schema.products).where(eq(schema.products.id, id));
+    return result.rowCount ? result.rowCount > 0 : false;
+  }
+
+  async getProductsBySeller(sellerId: string): Promise<Product[]> {
+    return await this.db.select().from(schema.products).where(eq(schema.products.sellerId, sellerId));
+  }
+
+  async getProductsByCategory(category: string): Promise<Product[]> {
+    return await this.db.select().from(schema.products).where(eq(schema.products.category, category));
+  }
+
+  async searchProducts(query: string): Promise<Product[]> {
+    return await this.db.select().from(schema.products).where(like(schema.products.name, `%${query}%`));
+  }
+
+  // Cart
+  async getCartItems(buyerId: string): Promise<CartItem[]> {
+    return await this.db.select().from(schema.cartItems).where(eq(schema.cartItems.buyerId, buyerId));
+  }
+
+  async addToCart(insertCartItem: InsertCartItem): Promise<CartItem> {
+    const result = await this.db.insert(schema.cartItems).values(insertCartItem).returning();
+    return result[0];
+  }
+
+  async updateCartItem(id: string, cartItemUpdate: Partial<CartItem>): Promise<CartItem | undefined> {
+    const result = await this.db.update(schema.cartItems).set(cartItemUpdate).where(eq(schema.cartItems.id, id)).returning();
+    return result[0];
+  }
+
+  async removeFromCart(id: string): Promise<boolean> {
+    const result = await this.db.delete(schema.cartItems).where(eq(schema.cartItems.id, id));
+    return result.rowCount ? result.rowCount > 0 : false;
+  }
+
+  async clearCart(buyerId: string): Promise<boolean> {
+    const result = await this.db.delete(schema.cartItems).where(eq(schema.cartItems.buyerId, buyerId));
+    return result.rowCount ? result.rowCount > 0 : false;
+  }
+
+  // Orders
+  async getOrder(id: string): Promise<Order | undefined> {
+    const result = await this.db.select().from(schema.orders).where(eq(schema.orders.id, id)).limit(1);
+    return result[0];
+  }
+
+  async createOrder(insertOrder: InsertOrder): Promise<Order> {
+    const result = await this.db.insert(schema.orders).values(insertOrder).returning();
+    return result[0];
+  }
+
+  async updateOrder(id: string, orderUpdate: Partial<Order>): Promise<Order | undefined> {
+    const result = await this.db.update(schema.orders).set(orderUpdate).where(eq(schema.orders.id, id)).returning();
+    return result[0];
+  }
+
+  async getOrdersByBuyer(buyerId: string): Promise<Order[]> {
+    return await this.db.select().from(schema.orders).where(eq(schema.orders.buyerId, buyerId));
+  }
+
+  async getOrdersBySeller(sellerId: string): Promise<Order[]> {
+    // This requires a join with order_items to find orders containing products from this seller
+    const result = await this.db
+      .select({
+        id: schema.orders.id,
+        buyerId: schema.orders.buyerId,
+        kayayoId: schema.orders.kayayoId,
+        riderId: schema.orders.riderId,
+        status: schema.orders.status,
+        totalAmount: schema.orders.totalAmount,
+        deliveryAddress: schema.orders.deliveryAddress,
+        deliveryFee: schema.orders.deliveryFee,
+        kayayoFee: schema.orders.kayayoFee,
+        platformFee: schema.orders.platformFee,
+        estimatedDeliveryTime: schema.orders.estimatedDeliveryTime,
+        paymentMethod: schema.orders.paymentMethod,
+        createdAt: schema.orders.createdAt,
+        confirmedAt: schema.orders.confirmedAt,
+        deliveredAt: schema.orders.deliveredAt,
+      })
+      .from(schema.orders)
+      .innerJoin(schema.orderItems, eq(schema.orders.id, schema.orderItems.orderId))
+      .innerJoin(schema.products, eq(schema.orderItems.productId, schema.products.id))
+      .where(eq(schema.products.sellerId, sellerId));
+    
+    return result;
+  }
+
+  async getOrdersByKayayo(kayayoId: string): Promise<Order[]> {
+    return await this.db.select().from(schema.orders).where(eq(schema.orders.kayayoId, kayayoId));
+  }
+
+  async getOrdersByRider(riderId: string): Promise<Order[]> {
+    return await this.db.select().from(schema.orders).where(eq(schema.orders.riderId, riderId));
+  }
+
+  async getPendingOrders(): Promise<Order[]> {
+    return await this.db.select().from(schema.orders).where(eq(schema.orders.status, 'pending'));
+  }
+
+  // Order Items
+  async getOrderItem(id: string): Promise<OrderItem | undefined> {
+    const result = await this.db.select().from(schema.orderItems).where(eq(schema.orderItems.id, id)).limit(1);
+    return result[0];
+  }
+
+  async createOrderItem(insertOrderItem: InsertOrderItem): Promise<OrderItem> {
+    const result = await this.db.insert(schema.orderItems).values(insertOrderItem).returning();
+    return result[0];
+  }
+
+  async updateOrderItem(id: string, orderItemUpdate: Partial<OrderItem>): Promise<OrderItem | undefined> {
+    const result = await this.db.update(schema.orderItems).set(orderItemUpdate).where(eq(schema.orderItems.id, id)).returning();
+    return result[0];
+  }
+
+  async getOrderItemsByOrder(orderId: string): Promise<OrderItem[]> {
+    return await this.db.select().from(schema.orderItems).where(eq(schema.orderItems.orderId, orderId));
+  }
+
+  // Reviews
+  async getReview(id: string): Promise<Review | undefined> {
+    const result = await this.db.select().from(schema.reviews).where(eq(schema.reviews.id, id)).limit(1);
+    return result[0];
+  }
+
+  async createReview(insertReview: InsertReview): Promise<Review> {
+    const result = await this.db.insert(schema.reviews).values(insertReview).returning();
+    return result[0];
+  }
+
+  async getReviewsByReviewee(revieweeId: string): Promise<Review[]> {
+    return await this.db.select().from(schema.reviews).where(eq(schema.reviews.revieweeId, revieweeId));
+  }
+
+  async getReviewsByOrder(orderId: string): Promise<Review[]> {
+    return await this.db.select().from(schema.reviews).where(eq(schema.reviews.orderId, orderId));
+  }
+
+  // Kayayo Availability
+  async getKayayoAvailability(kayayoId: string): Promise<KayayoAvailability | undefined> {
+    const result = await this.db.select().from(schema.kayayoAvailability).where(eq(schema.kayayoAvailability.kayayoId, kayayoId)).limit(1);
+    return result[0];
+  }
+
+  async createKayayoAvailability(insertAvailability: InsertKayayoAvailability): Promise<KayayoAvailability> {
+    const result = await this.db.insert(schema.kayayoAvailability).values(insertAvailability).returning();
+    return result[0];
+  }
+
+  async updateKayayoAvailability(kayayoId: string, availabilityUpdate: Partial<KayayoAvailability>): Promise<KayayoAvailability | undefined> {
+    const result = await this.db.update(schema.kayayoAvailability).set(availabilityUpdate).where(eq(schema.kayayoAvailability.kayayoId, kayayoId)).returning();
+    return result[0];
+  }
+
+  async getAvailableKayayos(market: string): Promise<KayayoAvailability[]> {
+    return await this.db.select().from(schema.kayayoAvailability).where(
+      and(
+        eq(schema.kayayoAvailability.market, market),
+        eq(schema.kayayoAvailability.isAvailable, true)
+      )
+    );
+  }
+}
+
+export const storage = new PostgresStorage();
