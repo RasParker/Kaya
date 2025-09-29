@@ -14,6 +14,7 @@ export default function Orders() {
   const { data: orders = [], isLoading } = useQuery<Order[]>({
     queryKey: ["/api/orders"],
     enabled: !!user,
+    refetchInterval: 10000, // Refresh every 10 seconds for live updates
   });
 
   return (
@@ -57,10 +58,12 @@ export default function Orders() {
                 key={order.id}
                 order={order}
                 onTrack={() => {
-                  // TODO: Navigate to order tracking page
+                  setLocation(`/buyer/order-confirmation?orderId=${order.id}`);
                 }}
                 onReorder={() => {
-                  // TODO: Implement reorder functionality
+                  // Add items from this order back to cart
+                  // For now, navigate to browse to shop again
+                  setLocation("/browse");
                 }}
               />
             ))}

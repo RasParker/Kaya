@@ -87,7 +87,7 @@ export default function OrderConfirmationPage() {
             <p className="text-muted-foreground">
               We couldn't find this order. It may have been cancelled or the link is invalid.
             </p>
-            <Button onClick={() => setLocation("/orders")} className="w-full" data-testid="button-view-orders-error">
+            <Button onClick={() => setLocation("/buyer/orders")} className="w-full" data-testid="button-view-orders-error">
               View All Orders
             </Button>
           </div>
@@ -103,7 +103,7 @@ export default function OrderConfirmationPage() {
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => setLocation("/orders")}
+          onClick={() => setLocation("/buyer/orders")}
           data-testid="button-back"
         >
           <ArrowLeft className="h-5 w-5" />
@@ -247,7 +247,7 @@ export default function OrderConfirmationPage() {
           )}
           
           <Button 
-            onClick={() => setLocation("/orders")}
+            onClick={() => setLocation("/buyer/orders")}
             className="w-full"
             data-testid="button-view-orders"
           >
