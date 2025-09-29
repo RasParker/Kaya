@@ -580,6 +580,105 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Rider picks up order for delivery
+  app.patch("/api/orders/:orderId/pickup", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      // Only riders can pick up orders
+      if (req.user!.userType !== 'rider') {
+        return res.status(403).json({ message: "Only riders can pick up orders" });
+      }
+
+      // Get the order to verify it's ready for pickup
+      const order = await storage.getOrder(req.params.orderId);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      // Only orders that are ready for pickup and don't have a rider assigned can be picked up
+      if (order.status !== 'ready_for_pickup' || order.riderId) {
+        return res.status(400).json({ message: "Order is not available for pickup" });
+      }
+
+      const updatedOrder = await storage.updateOrder(req.params.orderId, {
+        status: "in_transit",
+        riderId: req.user!.userId
+      });
+      
+      if (!updatedOrder) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+      
+      // Broadcast to buyer and kayayo
+      broadcastToUser(updatedOrder.buyerId, {
+        type: 'ORDER_IN_TRANSIT',
+        order: updatedOrder
+      });
+      
+      if (updatedOrder.kayayoId) {
+        broadcastToUser(updatedOrder.kayayoId, {
+          type: 'ORDER_IN_TRANSIT',
+          order: updatedOrder
+        });
+      }
+      
+      res.json(updatedOrder);
+    } catch (error) {
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+
+  // Rider completes delivery
+  app.patch("/api/orders/:orderId/deliver", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      // Only riders can complete deliveries
+      if (req.user!.userType !== 'rider') {
+        return res.status(403).json({ message: "Only riders can complete deliveries" });
+      }
+
+      // Get the order to verify rider ownership
+      const order = await storage.getOrder(req.params.orderId);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      // Only the assigned rider can complete the delivery
+      if (order.riderId !== req.user!.userId) {
+        return res.status(403).json({ message: "You can only complete deliveries assigned to you" });
+      }
+
+      // Order must be in_transit to be delivered
+      if (order.status !== 'in_transit') {
+        return res.status(400).json({ message: "Order is not in transit" });
+      }
+
+      const updatedOrder = await storage.updateOrder(req.params.orderId, {
+        status: "delivered",
+        deliveredAt: new Date()
+      });
+      
+      if (!updatedOrder) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+      
+      // Broadcast to buyer and kayayo
+      broadcastToUser(updatedOrder.buyerId, {
+        type: 'ORDER_DELIVERED',
+        order: updatedOrder
+      });
+      
+      if (updatedOrder.kayayoId) {
+        broadcastToUser(updatedOrder.kayayoId, {
+          type: 'ORDER_DELIVERED',
+          order: updatedOrder
+        });
+      }
+      
+      res.json(updatedOrder);
+    } catch (error) {
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+
   // Kayayo marks shopping as complete and ready for rider pickup
   app.patch("/api/orders/:orderId/ready-for-pickup", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
