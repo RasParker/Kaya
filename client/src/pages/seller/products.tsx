@@ -18,6 +18,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Plus, Edit, Trash2, Package } from "lucide-react";
+import type { Product } from "@shared/schema";
 
 const productSchema = z.object({
   name: z.string().min(1, "Product name is required"),
@@ -55,14 +56,15 @@ export default function SellerProducts() {
   const [editingProduct, setEditingProduct] = useState<any>(null);
 
   // Get seller info
-  const { data: seller } = useQuery({
+  const { data: sellers = [] } = useQuery({
     queryKey: ["/api/sellers", { userId: user?.id }],
     enabled: !!user,
   });
 
+  const seller = Array.isArray(sellers) ? sellers[0] : undefined;
   const sellerId = seller?.id;
 
-  const { data: products = [], isLoading } = useQuery({
+  const { data: products = [], isLoading } = useQuery<Product[]>({
     queryKey: ["/api/products", { sellerId }],
     enabled: !!sellerId,
   });
@@ -216,7 +218,7 @@ export default function SellerProducts() {
           </div>
         ) : (
           <div className="space-y-3">
-            {products.map((product: any) => (
+            {products.map((product) => (
               <Card key={product.id} data-testid={`product-card-${product.id}`}>
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between mb-3">

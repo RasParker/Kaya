@@ -7,16 +7,59 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Search, Filter, Plus, ArrowLeft } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/lib/auth";
+import { apiRequest } from "@/lib/queryClient";
+import { SkeletonProductCard } from "@/components/ui/skeleton";
+import LoadingSpinner from "@/components/ui/loading-spinner";
 import type { Product } from "@shared/schema";
 
 export default function Browse() {
   const [, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: products = [], isLoading } = useQuery<Product[]>({
     queryKey: ["/api/products", { category: selectedCategory === "all" ? undefined : selectedCategory, search: searchQuery || undefined }],
     enabled: true,
+  });
+
+  // Get buyer info for cart operations
+  const { data: buyers = [] } = useQuery({
+    queryKey: ["/api/buyers", { userId: user?.id }],
+    enabled: !!user?.id && user?.userType === 'buyer',
+  });
+  
+  const buyer = Array.isArray(buyers) ? buyers[0] : undefined;
+
+  // Add to cart mutation
+  const addToCartMutation = useMutation({
+    mutationFn: async ({ productId, quantity }: { productId: string; quantity: number }) => {
+      const response = await apiRequest("POST", "/api/cart", {
+        buyerId: buyer?.id,
+        productId,
+        quantity,
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+      toast({
+        title: "Added to cart",
+        description: "Product has been added to your cart.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Failed to add to cart",
+        description: "Please try again or contact support.",
+        variant: "destructive",
+      });
+    },
   });
 
   const categories = [
@@ -77,8 +120,13 @@ export default function Browse() {
       {/* Products Grid */}
       <main className="p-4 pb-20">
         {isLoading ? (
-          <div className="text-center py-8">
-            <p className="text-muted-foreground">Loading products...</p>
+          <div className="grid grid-cols-2 gap-3">
+            <SkeletonProductCard />
+            <SkeletonProductCard />
+            <SkeletonProductCard />
+            <SkeletonProductCard />
+            <SkeletonProductCard />
+            <SkeletonProductCard />
           </div>
         ) : products.length === 0 ? (
           <div className="text-center py-8">
@@ -87,7 +135,13 @@ export default function Browse() {
         ) : (
           <div className="grid grid-cols-2 gap-3">
             {products.map((product) => (
-              <ProductCard key={product.id} product={product} />
+              <ProductCard 
+                key={product.id} 
+                product={product} 
+                onAddToCart={() => addToCartMutation.mutate({ productId: product.id, quantity: 1 })}
+                isAddingToCart={addToCartMutation.isPending}
+                buyerId={buyer?.id}
+              />
             ))}
           </div>
         )}
@@ -96,7 +150,17 @@ export default function Browse() {
   );
 }
 
-function ProductCard({ product }: { product: Product }) {
+function ProductCard({ 
+  product, 
+  onAddToCart, 
+  isAddingToCart, 
+  buyerId 
+}: { 
+  product: Product; 
+  onAddToCart: () => void; 
+  isAddingToCart: boolean; 
+  buyerId?: string; 
+}) {
   return (
     <Card className="overflow-hidden" data-testid={`card-product-${product.id}`}>
       <CardContent className="p-3">
@@ -141,11 +205,21 @@ function ProductCard({ product }: { product: Product }) {
         <Button
           size="sm"
           className="w-full text-xs h-8"
-          disabled={!product.isAvailable}
+          disabled={!product.isAvailable || !buyerId || isAddingToCart}
+          onClick={onAddToCart}
           data-testid={`button-add-to-cart-${product.id}`}
         >
-          <Plus className="w-3 h-3 mr-1" />
-          Add to Cart
+          {isAddingToCart ? (
+            <>
+              <LoadingSpinner size="sm" className="w-3 h-3 mr-1" />
+              Adding...
+            </>
+          ) : (
+            <>
+              <Plus className="w-3 h-3 mr-1" />
+              Add to Cart
+            </>
+          )}
         </Button>
       </CardContent>
     </Card>
