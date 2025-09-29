@@ -2,7 +2,7 @@
 
 ## Overview
 The Grocery Market App is an online marketplace that connects **buyers, sellers, kayayo (market assistants), and riders**.  
-It allows buyers to shop for groceries, sellers to list products, kayayo to help with market pickups, and riders to deliver items.  
+It allows buyers to shop for groceries, sellers to list products, kayayo to help with market pickups, and riders to deliver items in Ghanaian markets, starting with a Makola pilot.  
 
 The goal is to create a lightweight but scalable platform where each role has its own workflow.
 
