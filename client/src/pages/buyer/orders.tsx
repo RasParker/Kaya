@@ -5,12 +5,13 @@ import MobileLayout from "@/components/layout/mobile-layout";
 import OrderCard from "@/components/order-card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Package } from "lucide-react";
+import type { Order } from "@shared/schema";
 
 export default function Orders() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
 
-  const { data: orders = [], isLoading } = useQuery({
+  const { data: orders = [], isLoading } = useQuery<Order[]>({
     queryKey: ["/api/orders"],
     enabled: !!user,
   });
@@ -51,7 +52,7 @@ export default function Orders() {
           </div>
         ) : (
           <div className="space-y-4">
-            {orders.map((order: any) => (
+            {orders.map((order) => (
               <OrderCard
                 key={order.id}
                 order={order}

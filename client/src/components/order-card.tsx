@@ -2,13 +2,10 @@ import { CheckCircle, Truck, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
+import type { Order } from "@shared/schema";
+
 interface OrderCardProps {
-  order: {
-    id: string;
-    status: string;
-    totalAmount: string;
-    createdAt: string | Date;
-  };
+  order: Order;
   onTrack: () => void;
   onReorder: () => void;
 }
@@ -46,7 +43,8 @@ export default function OrderCard({ order, onTrack, onReorder }: OrderCardProps)
   const statusInfo = getStatusInfo(order.status);
   const StatusIcon = statusInfo.icon;
   
-  const formatDate = (date: string | Date) => {
+  const formatDate = (date: Date | null) => {
+    if (!date) return "N/A";
     const d = new Date(date);
     const now = new Date();
     const diffInHours = Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60));

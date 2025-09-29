@@ -7,13 +7,14 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Search, Filter, Plus, ArrowLeft } from "lucide-react";
+import type { Product } from "@shared/schema";
 
 export default function Browse() {
   const [, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
 
-  const { data: products = [], isLoading } = useQuery({
+  const { data: products = [], isLoading } = useQuery<Product[]>({
     queryKey: ["/api/products", { category: selectedCategory === "all" ? undefined : selectedCategory, search: searchQuery || undefined }],
     enabled: true,
   });
@@ -85,7 +86,7 @@ export default function Browse() {
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3">
-            {products.map((product: any) => (
+            {products.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>
@@ -95,7 +96,7 @@ export default function Browse() {
   );
 }
 
-function ProductCard({ product }: { product: any }) {
+function ProductCard({ product }: { product: Product }) {
   return (
     <Card className="overflow-hidden" data-testid={`card-product-${product.id}`}>
       <CardContent className="p-3">

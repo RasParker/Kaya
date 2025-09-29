@@ -74,7 +74,7 @@ export default function Profile() {
               <div className="flex items-center gap-3">
                 <Star className="h-4 w-4 text-yellow-500" />
                 <span className="text-sm">
-                  Rating: <span data-testid="text-user-rating">{parseFloat(user.rating).toFixed(1)}</span> stars
+                  Rating: <span data-testid="text-user-rating">{parseFloat(user.rating || '0').toFixed(1)}</span> stars
                 </span>
               </div>
               
@@ -94,26 +94,80 @@ export default function Profile() {
             <CardTitle className="text-lg">Quick Actions</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <Button
-              variant="outline"
-              className="w-full justify-start"
-              onClick={() => setLocation("/orders")}
-              data-testid="button-view-orders"
-            >
-              <Package className="h-4 w-4 mr-3" />
-              View Order History
-            </Button>
+            {/* Role-specific actions */}
+            {user.userType === 'buyer' && (
+              <>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => setLocation("/orders")}
+                  data-testid="button-view-orders"
+                >
+                  <Package className="h-4 w-4 mr-3" />
+                  View Order History
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => setLocation("/browse")}
+                  data-testid="button-start-shopping"
+                >
+                  <MapPin className="h-4 w-4 mr-3" />
+                  Start Shopping
+                </Button>
+              </>
+            )}
             
-            <Button
-              variant="outline"
-              className="w-full justify-start"
-              onClick={() => setLocation("/browse")}
-              data-testid="button-start-shopping"
-            >
-              <MapPin className="h-4 w-4 mr-3" />
-              Start Shopping
-            </Button>
+            {user.userType === 'seller' && (
+              <>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => setLocation("/seller/dashboard")}
+                  data-testid="button-seller-dashboard"
+                >
+                  <Package className="h-4 w-4 mr-3" />
+                  Go to Dashboard
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => setLocation("/seller/products")}
+                  data-testid="button-manage-products"
+                >
+                  <MapPin className="h-4 w-4 mr-3" />
+                  Manage Products
+                </Button>
+              </>
+            )}
             
+            {user.userType === 'kayayo' && (
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() => setLocation("/kayayo/dashboard")}
+                data-testid="button-kayayo-dashboard"
+              >
+                <Package className="h-4 w-4 mr-3" />
+                Go to Dashboard
+              </Button>
+            )}
+            
+            {user.userType === 'rider' && (
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() => setLocation("/rider/dashboard")}
+                data-testid="button-rider-dashboard"
+              >
+                <Package className="h-4 w-4 mr-3" />
+                Go to Dashboard
+              </Button>
+            )}
+            
+            {/* Common action for all users */}
             <Button
               variant="outline"
               className="w-full justify-start"

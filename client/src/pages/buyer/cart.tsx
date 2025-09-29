@@ -9,13 +9,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
+import type { CartItem, Product, InsertOrder } from "@shared/schema";
+
+type CartItemWithProduct = CartItem & { product: Product };
 
 export default function Cart() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
   const { toast } = useToast();
-
-  const { data: cartItems = [], isLoading } = useQuery({
+  
+  const { data: cartItems = [], isLoading } = useQuery<CartItemWithProduct[]>({
     queryKey: ["/api/cart"],
     enabled: !!user,
   });
@@ -35,7 +38,7 @@ export default function Cart() {
   });
 
   const createOrderMutation = useMutation({
-    mutationFn: async (orderData: any) => {
+    mutationFn: async (orderData: InsertOrder) => {
       const response = await apiRequest("POST", "/api/orders", orderData);
       return response.json();
     },
@@ -51,8 +54,8 @@ export default function Cart() {
   });
 
   const calculateTotal = () => {
-    return cartItems.reduce((total: number, item: any) => {
-      return total + (parseFloat(item.product?.price || 0) * item.quantity);
+    return cartItems.reduce((total, item) => {
+      return total + (parseFloat(item.product?.price || '0') * item.quantity);
     }, 0);
   };
 
@@ -65,6 +68,7 @@ export default function Cart() {
     const platformFee = 1.00;
 
     createOrderMutation.mutate({
+      buyerId: user?.id || "",
       totalAmount: (total + deliveryFee + kayayoFee + platformFee).toFixed(2),
       deliveryAddress: "User Address", // TODO: Get from user profile
       deliveryFee: deliveryFee.toFixed(2),
@@ -75,14 +79,14 @@ export default function Cart() {
   };
 
   // Group cart items by seller
-  const groupedItems = cartItems.reduce((groups: any, item: any) => {
+  const groupedItems = cartItems.reduce((groups: Record<string, CartItemWithProduct[]>, item) => {
     const sellerId = item.product?.sellerId || 'unknown';
     if (!groups[sellerId]) {
       groups[sellerId] = [];
     }
     groups[sellerId].push(item);
     return groups;
-  }, {});
+  }, {} as Record<string, CartItemWithProduct[]>);
 
   if (isLoading) {
     return (
@@ -127,7 +131,7 @@ export default function Cart() {
         ) : (
           <div className="space-y-4">
             {/* Cart Items grouped by seller */}
-            {Object.entries(groupedItems).map(([sellerId, items]: [string, any]) => (
+            {Object.entries(groupedItems).map(([sellerId, items]) => (
               <Card key={sellerId}>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm">
@@ -135,7 +139,7 @@ export default function Cart() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {items.map((item: any) => (
+                  {items.map((item) => (
                     <CartItemRow 
                       key={item.id} 
                       item={item} 
@@ -198,7 +202,7 @@ export default function Cart() {
   );
 }
 
-function CartItemRow({ item, onRemove }: { item: any; onRemove: () => void }) {
+function CartItemRow({ item, onRemove }: { item: CartItemWithProduct; onRemove: () => void }) {
   const product = item.product;
   
   if (!product) return null;

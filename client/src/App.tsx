@@ -12,7 +12,7 @@ import Register from "@/pages/auth/register";
 import Browse from "@/pages/buyer/browse";
 import Cart from "@/pages/buyer/cart";
 import Orders from "@/pages/buyer/orders";
-import Profile from "@/pages/buyer/profile";
+import Profile from "@/pages/profile";
 import SellerDashboard from "@/pages/seller/dashboard";
 import SellerProducts from "@/pages/seller/products";
 import SellerOrders from "@/pages/seller/orders";
