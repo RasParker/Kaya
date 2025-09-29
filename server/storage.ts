@@ -581,7 +581,8 @@ export class MemStorage implements IStorage {
       deliveryFee: insertOrder.deliveryFee || "0.00",
       kayayoFee: insertOrder.kayayoFee || "0.00",
       platformFee: insertOrder.platformFee || "0.00",
-      estimatedDeliveryTime: insertOrder.estimatedDeliveryTime || null
+      estimatedDeliveryTime: insertOrder.estimatedDeliveryTime || null,
+      paymentMethod: insertOrder.paymentMethod || null
     };
     this.orders.set(id, order);
     return order;
