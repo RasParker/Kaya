@@ -14,7 +14,9 @@ import {
   Plus, 
   Eye,
   Clock,
-  CheckCircle
+  CheckCircle,
+  Wallet,
+  TrendingUp
 } from "lucide-react";
 import type { Product, Order } from "@shared/schema";
 
@@ -59,6 +61,26 @@ export default function SellerDashboard() {
     return sum + parseFloat(order.totalAmount || 0);
   }, 0);
 
+  // Calculate weekly earnings
+  const weekOrders = orders.filter((order: any) => {
+    const orderDate = new Date(order.createdAt);
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    return orderDate >= weekAgo;
+  });
+  
+  const weeklyEarnings = weekOrders.reduce((sum: number, order: any) => {
+    return sum + parseFloat(order.totalAmount || 0);
+  }, 0);
+
+  // Calculate balance (simplified - in real app this would come from backend)
+  const totalEarnings = orders.reduce((sum: number, order: any) => {
+    return order.status === 'delivered' ? sum + parseFloat(order.totalAmount || 0) : sum;
+  }, 0);
+  
+  const withdrawnAmount = 0; // This would come from withdrawal records
+  const availableBalance = totalEarnings - withdrawnAmount;
+
   return (
     <MobileLayout>
       {/* Header */}
@@ -79,7 +101,7 @@ export default function SellerDashboard() {
         </div>
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-3 gap-2">
           <div className="bg-primary/10 rounded-lg p-3">
             <div className="flex items-center gap-2">
               <DollarSign className="h-4 w-4 text-primary" />
@@ -87,6 +109,15 @@ export default function SellerDashboard() {
             </div>
             <p className="text-lg font-bold text-primary" data-testid="today-earnings">
               ₵{todayEarnings.toFixed(2)}
+            </p>
+          </div>
+          <div className="bg-green-50 rounded-lg p-3">
+            <div className="flex items-center gap-2">
+              <Wallet className="h-4 w-4 text-green-600" />
+              <span className="text-xs text-muted-foreground">Balance</span>
+            </div>
+            <p className="text-lg font-bold text-green-600" data-testid="available-balance">
+              ₵{availableBalance.toFixed(2)}
             </p>
           </div>
           <div className="bg-secondary/10 rounded-lg p-3">
@@ -132,13 +163,53 @@ export default function SellerDashboard() {
           </Card>
         )}
 
+        {/* Wallet & Earnings */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Wallet className="h-5 w-5" />
+              Wallet & Earnings
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                <div>
+                  <p className="text-sm text-muted-foreground">Available Balance</p>
+                  <p className="text-2xl font-bold text-green-600">₵{availableBalance.toFixed(2)}</p>
+                </div>
+                <Button 
+                  className="bg-green-600 hover:bg-green-700"
+                  onClick={() => {
+                    // TODO: Implement withdraw functionality
+                    alert('Withdraw functionality will be available soon!');
+                  }}
+                  data-testid="button-withdraw"
+                >
+                  Withdraw
+                </Button>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="text-center p-3 bg-muted/50 rounded-lg">
+                  <p className="text-sm text-muted-foreground">This Week</p>
+                  <p className="text-lg font-semibold">₵{weeklyEarnings.toFixed(2)}</p>
+                </div>
+                <div className="text-center p-3 bg-muted/50 rounded-lg">
+                  <p className="text-sm text-muted-foreground">Total Orders</p>
+                  <p className="text-lg font-semibold">{totalOrders}</p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Quick Actions */}
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Quick Actions</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               <Button
                 variant="outline"
                 className="h-16 flex-col gap-2"
@@ -156,6 +227,18 @@ export default function SellerDashboard() {
               >
                 <ShoppingBag className="h-5 w-5" />
                 <span className="text-xs">View Orders</span>
+              </Button>
+              <Button
+                variant="outline"
+                className="h-16 flex-col gap-2"
+                onClick={() => {
+                  // TODO: Navigate to analytics/insights page
+                  alert('Analytics feature coming soon!');
+                }}
+                data-testid="button-analytics"
+              >
+                <TrendingUp className="h-5 w-5" />
+                <span className="text-xs">Analytics</span>
               </Button>
             </div>
           </CardContent>
