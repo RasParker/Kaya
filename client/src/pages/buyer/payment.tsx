@@ -8,6 +8,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import LoadingSpinner from "@/components/ui/loading-spinner";
 import MobileLayout from "@/components/layout/mobile-layout";
 import { apiRequest } from "@/lib/queryClient";
 import type { CartItem, Product, User as UserType, InsertOrder } from "@shared/schema";
@@ -245,12 +246,16 @@ export default function PaymentPage() {
           disabled={createOrderMutation.isPending || !selectedPayment}
           data-testid="button-confirm-order"
         >
-          {createOrderMutation.isPending 
-            ? "Placing Order..." 
-            : !selectedPayment
-              ? "Select Payment Method"
-              : `Confirm Order - ₵${grandTotal.toFixed(2)}`
-          }
+          {createOrderMutation.isPending ? (
+            <>
+              <LoadingSpinner size="sm" className="mr-2" />
+              Placing Order...
+            </>
+          ) : !selectedPayment ? (
+            "Select Payment Method"
+          ) : (
+            `Confirm Order - ₵${grandTotal.toFixed(2)}`
+          )}
         </Button>
       </div>
     </MobileLayout>

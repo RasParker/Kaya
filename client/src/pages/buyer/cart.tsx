@@ -13,6 +13,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import LoadingSpinner from "@/components/ui/loading-spinner";
+import { Skeleton, SkeletonCard } from "@/components/ui/skeleton";
 import { ArrowLeft, Minus, Plus, Trash2, ShoppingBag, MapPin, Clock, Star, User } from "lucide-react";
 import type { CartItem, Product, Seller, User as UserType, InsertOrder } from "@shared/schema";
 
@@ -138,8 +140,25 @@ export default function Cart() {
   if (isLoading) {
     return (
       <MobileLayout>
-        <div className="p-4">
-          <p className="text-center text-muted-foreground">Loading cart...</p>
+        {/* Header */}
+        <header className="bg-card border-b border-border p-4">
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setLocation("/")}
+              data-testid="button-back"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <h1 className="text-xl font-semibold">Shopping Cart</h1>
+          </div>
+        </header>
+
+        <div className="p-4 space-y-4">
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
         </div>
       </MobileLayout>
     );

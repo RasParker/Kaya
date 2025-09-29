@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import LoadingSpinner from "@/components/ui/loading-spinner";
 import { apiRequest } from "@/lib/queryClient";
 
 import type { Order } from "@shared/schema";
@@ -231,7 +232,14 @@ export default function OrderCard({ order, onTrack, onReorder }: OrderCardProps)
                 disabled={confirmDeliveryMutation.isPending}
                 data-testid={`button-confirm-delivery-${order.id}`}
               >
-                Confirm Receipt
+                {confirmDeliveryMutation.isPending ? (
+                  <>
+                    <LoadingSpinner size="sm" className="mr-1" />
+                    Confirming...
+                  </>
+                ) : (
+                  "Confirm Receipt"
+                )}
               </Button>
             </>
           ) : order.status === 'cancelled' ? (
@@ -267,7 +275,14 @@ export default function OrderCard({ order, onTrack, onReorder }: OrderCardProps)
                 disabled={cancelOrderMutation.isPending}
                 data-testid={`button-cancel-${order.id}`}
               >
-                Cancel
+                {cancelOrderMutation.isPending ? (
+                  <>
+                    <LoadingSpinner size="sm" className="mr-1" />
+                    Cancelling...
+                  </>
+                ) : (
+                  "Cancel"
+                )}
               </Button>
             </>
           ) : (
