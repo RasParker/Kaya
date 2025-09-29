@@ -68,6 +68,7 @@ export const orders = pgTable("orders", {
   kayayoFee: decimal("kayayo_fee", { precision: 10, scale: 2 }).default("0.00"),
   platformFee: decimal("platform_fee", { precision: 10, scale: 2 }).default("0.00"),
   estimatedDeliveryTime: integer("estimated_delivery_time"), // minutes
+  paymentMethod: text("payment_method"), // 'momo', 'card', 'cash'
   createdAt: timestamp("created_at").defaultNow(),
   confirmedAt: timestamp("confirmed_at"),
   deliveredAt: timestamp("delivered_at"),

@@ -62,21 +62,7 @@ export default function Cart() {
     },
   });
 
-  const createOrderMutation = useMutation({
-    mutationFn: async (orderData: InsertOrder) => {
-      const response = await apiRequest("POST", "/api/orders", orderData);
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-      toast({
-        title: "Order placed!",
-        description: "Your order has been created successfully.",
-      });
-      setLocation("/orders");
-    },
-  });
+  // Remove createOrderMutation since we now navigate to payment page
 
   const calculateTotal = () => {
     return cartItems.reduce((total, item) => {
@@ -111,20 +97,21 @@ export default function Cart() {
       return;
     }
 
-    const itemsTotal = calculateTotal();
     const { kayayoFee, deliveryFee, platformFee } = calculateFees();
-    const grandTotal = itemsTotal + kayayoFee + deliveryFee + platformFee;
 
-    createOrderMutation.mutate({
-      buyerId: user?.id || "",
-      kayayoId: selectedKayayo,
-      totalAmount: grandTotal.toFixed(2),
+    // Save checkout data to localStorage for payment page
+    const checkoutData = {
+      selectedKayayo,
       deliveryAddress: deliveryAddress.trim(),
-      deliveryFee: deliveryFee.toFixed(2),
-      kayayoFee: kayayoFee.toFixed(2),
-      platformFee: platformFee.toFixed(2),
-      status: "pending",
-    });
+      kayayoFee,
+      deliveryFee,
+      platformFee,
+    };
+    
+    localStorage.setItem("checkoutData", JSON.stringify(checkoutData));
+    
+    // Navigate to payment page
+    setLocation("/buyer/payment");
   };
 
   // Group cart items by seller and fetch seller data
@@ -384,16 +371,14 @@ export default function Cart() {
           <Button
             className="w-full h-12 text-lg font-semibold"
             onClick={handleCheckout}
-            disabled={createOrderMutation.isPending || !selectedKayayo || !deliveryAddress.trim()}
+            disabled={!selectedKayayo || !deliveryAddress.trim()}
             data-testid="button-checkout"
           >
-            {createOrderMutation.isPending 
-              ? "Placing Order..." 
-              : !selectedKayayo 
-                ? "Select a Kayayo to Continue"
-                : !deliveryAddress.trim()
-                  ? "Enter Delivery Address"
-                  : "Proceed to Checkout"
+            {!selectedKayayo 
+              ? "Select a Kayayo to Continue"
+              : !deliveryAddress.trim()
+                ? "Enter Delivery Address"
+                : "Proceed to Payment"
             }
           </Button>
         </div>

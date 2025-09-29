@@ -11,6 +11,8 @@ import Login from "@/pages/auth/login";
 import Register from "@/pages/auth/register";
 import Browse from "@/pages/buyer/browse";
 import Cart from "@/pages/buyer/cart";
+import Payment from "@/pages/buyer/payment";
+import OrderConfirmation from "@/pages/buyer/order-confirmation";
 import Orders from "@/pages/buyer/orders";
 import Profile from "@/pages/profile";
 import SellerDashboard from "@/pages/seller/dashboard";
@@ -36,6 +38,16 @@ function Router() {
       <Route path="/cart">
         <ProtectedRoute allowedRoles={['buyer']}>
           <Cart />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/buyer/payment">
+        <ProtectedRoute allowedRoles={['buyer']}>
+          <Payment />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/buyer/order-confirmation">
+        <ProtectedRoute allowedRoles={['buyer']}>
+          <OrderConfirmation />
         </ProtectedRoute>
       </Route>
       <Route path="/orders">
