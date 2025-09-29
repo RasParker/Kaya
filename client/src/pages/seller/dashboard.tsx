@@ -16,23 +16,24 @@ import {
   Clock,
   CheckCircle
 } from "lucide-react";
+import type { Product, Order } from "@shared/schema";
 
 export default function SellerDashboard() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
   const { lastMessage } = useWebSocket();
 
-  const { data: products = [] } = useQuery({
+  const { data: products = [] } = useQuery<Product[]>({
     queryKey: ["/api/products", { sellerId: user?.id }],
     enabled: !!user,
   });
 
-  const { data: orders = [] } = useQuery({
+  const { data: orders = [] } = useQuery<Order[]>({
     queryKey: ["/api/orders"],
     enabled: !!user,
   });
 
-  const { data: pendingOrders = [] } = useQuery({
+  const { data: pendingOrders = [] } = useQuery<Order[]>({
     queryKey: ["/api/orders/pending"],
     enabled: !!user,
   });
@@ -94,7 +95,7 @@ export default function SellerDashboard() {
               <span className="text-xs text-muted-foreground">Rating</span>
             </div>
             <p className="text-lg font-bold text-secondary" data-testid="seller-rating">
-              {parseFloat(user.rating).toFixed(1)}
+              {parseFloat(user.rating || "0").toFixed(1)}
             </p>
           </div>
         </div>

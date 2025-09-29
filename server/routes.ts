@@ -1,16 +1,16 @@
-import type { Express } from "express";
+import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { insertUserSchema, insertProductSchema, insertCartItemSchema, insertOrderSchema } from "@shared/schema";
 import jwt from "jsonwebtoken";
 
-interface AuthenticatedRequest extends Express.Request {
+interface AuthenticatedRequest extends Request {
   user?: any;
 }
 
 // JWT middleware
-const authenticateToken = (req: AuthenticatedRequest, res: any, next: any) => {
+const authenticateToken = (req: AuthenticatedRequest, res: Response, next: any) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
 
@@ -275,12 +275,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Order routes
-  app.get("/api/orders", authenticateToken, async (req: AuthenticatedRequest, res) => {
+  app.get("/api/orders", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const userType = req.user!.userType;
       const userId = req.user!.userId;
       
-      let orders = [];
+      let orders: any[] = [];
       
       switch (userType) {
         case 'buyer':
