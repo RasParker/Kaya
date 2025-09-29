@@ -364,7 +364,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/orders/:id", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
-      const order = await storage.updateOrder(req.params.id, req.body);
+      // Only buyers can use the generic PATCH endpoint
+      if (req.user!.userType !== 'buyer') {
+        return res.status(403).json({ 
+          message: "Only buyers can use this endpoint. Sellers, kayayos, and riders must use role-specific endpoints for workflow actions." 
+        });
+      }
+
+      // Get the existing order first to verify ownership
+      const existingOrder = await storage.getOrder(req.params.id);
+      if (!existingOrder) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      // Verify buyer owns this order
+      if (existingOrder.buyerId !== req.user!.userId) {
+        return res.status(403).json({ message: "You can only update your own orders" });
+      }
+
+      // Define allowed updates for buyers
+      const allowedFields = ['deliveryAddress', 'deliveryInstructions'];
+      const requestedFields = Object.keys(req.body);
+      
+      // Check if buyer is requesting unauthorized updates
+      const unauthorizedFields = requestedFields.filter(field => !allowedFields.includes(field));
+      if (unauthorizedFields.length > 0) {
+        return res.status(403).json({ 
+          message: `Unauthorized field updates: ${unauthorizedFields.join(', ')}. Buyers can only update deliveryAddress and deliveryInstructions.` 
+        });
+      }
+
+      // Prevent empty patch requests
+      if (requestedFields.length === 0) {
+        return res.status(400).json({ message: "No fields provided for update" });
+      }
+
+      // Filter request body to only include allowed fields
+      const filteredUpdates = Object.fromEntries(
+        Object.entries(req.body).filter(([key]) => allowedFields.includes(key))
+      );
+
+      const order = await storage.updateOrder(req.params.id, filteredUpdates);
       if (!order) {
         return res.status(404).json({ message: "Order not found" });
       }
