@@ -209,7 +209,10 @@ export class MemStorage implements IStorage {
       id, 
       rating: "0.00",
       totalOrders: 0,
-      createdAt: new Date()
+      createdAt: new Date(),
+      profileImage: insertUser.profileImage || null,
+      isVerified: insertUser.isVerified || false,
+      isOnline: insertUser.isOnline || false
     };
     this.users.set(id, user);
     return user;
@@ -239,7 +242,15 @@ export class MemStorage implements IStorage {
 
   async createSeller(insertSeller: InsertSeller): Promise<Seller> {
     const id = randomUUID();
-    const seller: Seller = { ...insertSeller, id };
+    const seller: Seller = { 
+      ...insertSeller, 
+      id,
+      market: insertSeller.market || "Makola",
+      specialties: insertSeller.specialties || null,
+      openingHours: insertSeller.openingHours || null,
+      languages: insertSeller.languages || null,
+      verificationBadge: insertSeller.verificationBadge || false
+    };
     this.sellers.set(id, seller);
     return seller;
   }
@@ -264,7 +275,14 @@ export class MemStorage implements IStorage {
 
   async createProduct(insertProduct: InsertProduct): Promise<Product> {
     const id = randomUUID();
-    const product: Product = { ...insertProduct, id };
+    const product: Product = { 
+      ...insertProduct, 
+      id,
+      image: insertProduct.image || null,
+      isAvailable: insertProduct.isAvailable || true,
+      allowSubstitution: insertProduct.allowSubstitution || true,
+      description: insertProduct.description || null
+    };
     this.products.set(id, product);
     return product;
   }
@@ -305,7 +323,12 @@ export class MemStorage implements IStorage {
 
   async addToCart(insertCartItem: InsertCartItem): Promise<CartItem> {
     const id = randomUUID();
-    const cartItem: CartItem = { ...insertCartItem, id };
+    const cartItem: CartItem = { 
+      ...insertCartItem, 
+      id,
+      notes: insertCartItem.notes || null,
+      allowSubstitution: insertCartItem.allowSubstitution || true
+    };
     this.cartItems.set(id, cartItem);
     return cartItem;
   }
@@ -341,7 +364,14 @@ export class MemStorage implements IStorage {
       id, 
       createdAt: new Date(),
       confirmedAt: null,
-      deliveredAt: null
+      deliveredAt: null,
+      status: insertOrder.status || "pending",
+      kayayoId: insertOrder.kayayoId || null,
+      riderId: insertOrder.riderId || null,
+      deliveryFee: insertOrder.deliveryFee || "0.00",
+      kayayoFee: insertOrder.kayayoFee || "0.00",
+      platformFee: insertOrder.platformFee || "0.00",
+      estimatedDeliveryTime: insertOrder.estimatedDeliveryTime || null
     };
     this.orders.set(id, order);
     return order;
@@ -384,7 +414,14 @@ export class MemStorage implements IStorage {
 
   async createOrderItem(insertOrderItem: InsertOrderItem): Promise<OrderItem> {
     const id = randomUUID();
-    const orderItem: OrderItem = { ...insertOrderItem, id };
+    const orderItem: OrderItem = { 
+      ...insertOrderItem, 
+      id,
+      notes: insertOrderItem.notes || null,
+      isConfirmed: insertOrderItem.isConfirmed || false,
+      isPicked: insertOrderItem.isPicked || false,
+      substitutedWith: insertOrderItem.substitutedWith || null
+    };
     this.orderItems.set(id, orderItem);
     return orderItem;
   }
@@ -412,7 +449,9 @@ export class MemStorage implements IStorage {
     const review: Review = { 
       ...insertReview, 
       id, 
-      createdAt: new Date()
+      createdAt: new Date(),
+      comment: insertReview.comment || null,
+      tags: insertReview.tags || null
     };
     this.reviews.set(id, review);
     return review;
@@ -433,7 +472,14 @@ export class MemStorage implements IStorage {
 
   async createKayayoAvailability(insertAvailability: InsertKayayoAvailability): Promise<KayayoAvailability> {
     const id = randomUUID();
-    const availability: KayayoAvailability = { ...insertAvailability, id };
+    const availability: KayayoAvailability = { 
+      ...insertAvailability, 
+      id,
+      isAvailable: insertAvailability.isAvailable || true,
+      currentLocation: insertAvailability.currentLocation || null,
+      maxOrders: insertAvailability.maxOrders || 3,
+      currentOrders: insertAvailability.currentOrders || 0
+    };
     this.kayayoAvailability.set(insertAvailability.kayayoId, availability);
     return availability;
   }
