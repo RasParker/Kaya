@@ -5,6 +5,7 @@ import bcrypt from "bcrypt";
 import { storage } from "./storage";
 import { insertUserSchema, insertProductSchema, insertCartItemSchema, insertOrderSchema } from "@shared/schema";
 import jwt from "jsonwebtoken";
+import { OrderStateMachine, OrderStatus, OrderStateError } from "./orderStateMachine";
 
 interface AuthenticatedRequest extends Request {
   user?: any;
@@ -552,17 +553,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const allConfirmed = allOrderItems.every(item => item.isConfirmed || item.id === updatedOrderItem.id);
       
       if (allConfirmed) {
-        // Update order status to accepted
-        const order = await storage.updateOrder(req.params.orderId, {
-          status: "accepted",
-          confirmedAt: new Date()
-        });
-        
-        if (order) {
-          broadcastToUser(order.buyerId, {
-            type: 'ORDER_ACCEPTED',
-            order
+        // Get the current order to validate transition
+        const currentOrder = await storage.getOrder(req.params.orderId);
+        if (!currentOrder) {
+          return res.status(404).json({ message: "Order not found" });
+        }
+
+        try {
+          // Validate state transition using state machine
+          OrderStateMachine.validateTransition(
+            currentOrder,
+            OrderStatus.SELLER_CONFIRMED,
+            'seller',
+            req.user!.userId
+          );
+
+          // Update order status to seller_confirmed
+          const order = await storage.updateOrder(req.params.orderId, {
+            status: OrderStatus.SELLER_CONFIRMED,
+            confirmedAt: new Date()
           });
+          
+          if (order) {
+            broadcastToUser(order.buyerId, {
+              type: 'ORDER_SELLER_CONFIRMED',
+              order
+            });
+          }
+        } catch (error) {
+          if (error instanceof OrderStateError) {
+            return res.status(400).json({ 
+              message: error.message,
+              code: error.code 
+            });
+          }
+          throw error;
         }
       }
       
@@ -580,9 +605,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Only kayayos can view available orders" });
       }
 
-      // Get orders that are accepted but don't have kayayo assigned yet
+      // Get orders that are seller_confirmed but don't have kayayo assigned yet
       const orders = Array.from((storage as any).orders.values()).filter((order: any) => 
-        order.status === 'accepted' && !order.kayayoId
+        order.status === OrderStatus.SELLER_CONFIRMED && !order.kayayoId
       );
       
       res.json(orders);
@@ -601,10 +626,117 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get orders that are ready for pickup but don't have rider assigned yet
       const orders = Array.from((storage as any).orders.values()).filter((order: any) => 
-        order.status === 'ready_for_pickup' && !order.riderId
+        order.status === OrderStatus.READY_FOR_PICKUP && !order.riderId
       );
       
       res.json(orders);
+    } catch (error) {
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+
+  // Kayayo accepts order
+  app.patch("/api/orders/:orderId/accept", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      // Only kayayos can accept orders
+      if (req.user!.userType !== 'kayayo') {
+        return res.status(403).json({ message: "Only kayayos can accept orders" });
+      }
+
+      // Get the order to validate state and ownership
+      const order = await storage.getOrder(req.params.orderId);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      try {
+        // Validate state transition
+        OrderStateMachine.validateTransition(
+          order,
+          OrderStatus.KAYAYO_ACCEPTED,
+          'kayayo',
+          req.user!.userId
+        );
+
+        // Update order status and assign kayayo
+        const updatedOrder = await storage.updateOrder(req.params.orderId, {
+          status: OrderStatus.KAYAYO_ACCEPTED,
+          kayayoId: req.user!.userId
+        });
+        
+        if (!updatedOrder) {
+          return res.status(404).json({ message: "Order not found" });
+        }
+        
+        // Broadcast to buyer
+        broadcastToUser(updatedOrder.buyerId, {
+          type: 'ORDER_KAYAYO_ACCEPTED',
+          order: updatedOrder
+        });
+        
+        res.json(updatedOrder);
+      } catch (error) {
+        if (error instanceof OrderStateError) {
+          return res.status(400).json({ 
+            message: error.message,
+            code: error.code 
+          });
+        }
+        throw error;
+      }
+    } catch (error) {
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+
+  // Kayayo starts shopping
+  app.patch("/api/orders/:orderId/start-shopping", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      // Only kayayos can start shopping
+      if (req.user!.userType !== 'kayayo') {
+        return res.status(403).json({ message: "Only kayayos can start shopping" });
+      }
+
+      // Get the order to validate state and ownership
+      const order = await storage.getOrder(req.params.orderId);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      try {
+        // Validate state transition
+        OrderStateMachine.validateTransition(
+          order,
+          OrderStatus.SHOPPING,
+          'kayayo',
+          req.user!.userId
+        );
+
+        // Update order status
+        const updatedOrder = await storage.updateOrder(req.params.orderId, {
+          status: OrderStatus.SHOPPING
+        });
+        
+        if (!updatedOrder) {
+          return res.status(404).json({ message: "Order not found" });
+        }
+        
+        // Broadcast to buyer
+        broadcastToUser(updatedOrder.buyerId, {
+          type: 'ORDER_SHOPPING_STARTED',
+          order: updatedOrder
+        });
+        
+        res.json(updatedOrder);
+      } catch (error) {
+        if (error instanceof OrderStateError) {
+          return res.status(400).json({ 
+            message: error.message,
+            code: error.code 
+          });
+        }
+        throw error;
+      }
     } catch (error) {
       res.status(500).json({ message: "Server error" });
     }
@@ -624,13 +756,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Order not found" });
       }
 
-      // Only orders that are ready for pickup and don't have a rider assigned can be picked up
-      if (order.status !== 'ready_for_pickup' || order.riderId) {
-        return res.status(400).json({ message: "Order is not available for pickup" });
+      try {
+        // Validate state transition using state machine
+        OrderStateMachine.validateTransition(
+          order,
+          OrderStatus.IN_TRANSIT,
+          'rider',
+          req.user!.userId
+        );
+
+        // Additional check for rider assignment
+        if (order.riderId && order.riderId !== req.user!.userId) {
+          return res.status(403).json({ message: "Order is already assigned to another rider" });
+        }
+      } catch (error) {
+        if (error instanceof OrderStateError) {
+          return res.status(400).json({ 
+            message: error.message,
+            code: error.code 
+          });
+        }
+        throw error;
       }
 
       const updatedOrder = await storage.updateOrder(req.params.orderId, {
-        status: "in_transit",
+        status: OrderStatus.IN_TRANSIT,
         riderId: req.user!.userId
       });
       
@@ -671,18 +821,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Order not found" });
       }
 
-      // Only the assigned rider can complete the delivery
-      if (order.riderId !== req.user!.userId) {
-        return res.status(403).json({ message: "You can only complete deliveries assigned to you" });
-      }
-
-      // Order must be in_transit to be delivered
-      if (order.status !== 'in_transit') {
-        return res.status(400).json({ message: "Order is not in transit" });
+      try {
+        // Validate state transition using state machine
+        OrderStateMachine.validateTransition(
+          order,
+          OrderStatus.DELIVERED,
+          'rider',
+          req.user!.userId
+        );
+      } catch (error) {
+        if (error instanceof OrderStateError) {
+          return res.status(400).json({ 
+            message: error.message,
+            code: error.code 
+          });
+        }
+        throw error;
       }
 
       const updatedOrder = await storage.updateOrder(req.params.orderId, {
-        status: "delivered",
+        status: OrderStatus.DELIVERED,
         deliveredAt: new Date()
       });
       
@@ -723,13 +881,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Order not found" });
       }
 
-      // Only the assigned kayayo can mark the order as ready
-      if (order.kayayoId !== req.user!.userId) {
-        return res.status(403).json({ message: "You can only complete orders assigned to you" });
+      try {
+        // Validate state transition using state machine
+        OrderStateMachine.validateTransition(
+          order,
+          OrderStatus.READY_FOR_PICKUP,
+          'kayayo',
+          req.user!.userId
+        );
+      } catch (error) {
+        if (error instanceof OrderStateError) {
+          return res.status(400).json({ 
+            message: error.message,
+            code: error.code 
+          });
+        }
+        throw error;
       }
 
       const updatedOrder = await storage.updateOrder(req.params.orderId, {
-        status: "ready_for_pickup"
+        status: OrderStatus.READY_FOR_PICKUP
       });
       
       if (!updatedOrder) {
@@ -749,6 +920,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       res.json(updatedOrder);
+    } catch (error) {
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+
+  // Get available actions for an order
+  app.get("/api/orders/:orderId/actions", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const order = await storage.getOrder(req.params.orderId);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      const actions = OrderStateMachine.getAvailableActions(
+        order,
+        req.user!.userType,
+        req.user!.userId
+      );
+
+      res.json({
+        orderId: order.id,
+        currentStatus: order.status,
+        statusDisplayName: OrderStateMachine.getStatusDisplayName(order.status),
+        statusDescription: OrderStateMachine.getStatusDescription(order.status),
+        isTerminal: OrderStateMachine.isTerminalStatus(order.status),
+        availableActions: actions
+      });
     } catch (error) {
       res.status(500).json({ message: "Server error" });
     }
