@@ -273,6 +273,8 @@ export default function KayayoDashboard() {
 }
 
 function ActiveOrderCard({ order }: { order: Order }) {
+  const [, setLocation] = useLocation();
+  
   return (
     <div 
       className="border rounded-lg p-3 bg-blue-50 border-blue-200"
@@ -284,7 +286,7 @@ function ActiveOrderCard({ order }: { order: Order }) {
           {order.status === 'kayayo_accepted' ? 'Shopping' : order.status}
         </Badge>
       </div>
-      <div className="space-y-1 text-sm">
+      <div className="space-y-1 text-sm mb-3">
         <div className="flex items-center gap-2">
           <MapPin className="h-3 w-3 text-muted-foreground" />
           <span className="text-muted-foreground">Deliver to: {order.deliveryAddress}</span>
@@ -294,6 +296,15 @@ function ActiveOrderCard({ order }: { order: Order }) {
           <span className="font-semibold text-primary">₵{parseFloat(order.kayayoFee || "0").toFixed(2)}</span>
         </div>
       </div>
+      <Button 
+        size="sm" 
+        className="w-full bg-primary hover:bg-primary/90"
+        onClick={() => setLocation(`/kayayo/order/${order.id}`)}
+        data-testid={`button-view-order-${order.id}`}
+      >
+        <Route className="h-4 w-4 mr-2" />
+        View Task Details
+      </Button>
     </div>
   );
 }
