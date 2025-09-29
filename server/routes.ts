@@ -1,6 +1,7 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
+import bcrypt from "bcrypt";
 import { storage } from "./storage";
 import { insertUserSchema, insertProductSchema, insertCartItemSchema, insertOrderSchema } from "@shared/schema";
 import jwt from "jsonwebtoken";
@@ -18,7 +19,13 @@ const authenticateToken = (req: AuthenticatedRequest, res: Response, next: any) 
     return res.sendStatus(401);
   }
 
-  jwt.verify(token, process.env.SESSION_SECRET || 'fallback-secret', (err: any, user: any) => {
+  const jwtSecret = process.env.SESSION_SECRET;
+  if (!jwtSecret) {
+    console.error('SESSION_SECRET environment variable is required');
+    return res.sendStatus(500);
+  }
+
+  jwt.verify(token, jwtSecret, (err: any, user: any) => {
     if (err) return res.sendStatus(403);
     req.user = user;
     next();
@@ -66,7 +73,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "User already exists" });
       }
 
-      const user = await storage.createUser(userData);
+      // Hash password before storing
+      const saltRounds = 12;
+      const hashedPassword = await bcrypt.hash(userData.password, saltRounds);
+      const userDataWithHashedPassword = { ...userData, password: hashedPassword };
+
+      const user = await storage.createUser(userDataWithHashedPassword);
       
       // Create seller profile if user type is seller
       if (user.userType === 'seller' && req.body.sellerData) {
@@ -88,9 +100,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      const jwtSecret = process.env.SESSION_SECRET;
+      if (!jwtSecret) {
+        console.error('SESSION_SECRET environment variable is required');
+        return res.status(500).json({ message: "Server configuration error" });
+      }
+
       const token = jwt.sign(
         { userId: user.id, userType: user.userType },
-        process.env.SESSION_SECRET || 'fallback-secret',
+        jwtSecret,
         { expiresIn: '24h' }
       );
 
@@ -105,16 +123,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { phone, password } = req.body;
       
       const user = await storage.getUserByPhone(phone);
-      if (!user || user.password !== password) {
+      if (!user) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+
+      // Compare provided password with hashed password
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+      if (!isPasswordValid) {
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
       // Update user online status
       await storage.updateUser(user.id, { isOnline: true });
 
+      const jwtSecret = process.env.SESSION_SECRET;
+      if (!jwtSecret) {
+        console.error('SESSION_SECRET environment variable is required');
+        return res.status(500).json({ message: "Server configuration error" });
+      }
+
       const token = jwt.sign(
         { userId: user.id, userType: user.userType },
-        process.env.SESSION_SECRET || 'fallback-secret',
+        jwtSecret,
         { expiresIn: '24h' }
       );
 

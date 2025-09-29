@@ -17,6 +17,7 @@ import {
   type InsertKayayoAvailability
 } from "@shared/schema";
 import { randomUUID } from "crypto";
+import bcrypt from "bcrypt";
 
 export interface IStorage {
   // Users
@@ -101,14 +102,16 @@ export class MemStorage implements IStorage {
   }
 
   private seedData() {
-    // Create sample users
+    const saltRounds = 12;
+    
+    // Create sample users - each with individually hashed passwords for unique salts
     const buyerId = randomUUID();
     const buyer: User = {
       id: buyerId,
       phone: "+233244123456",
       name: "John Mensah",
       userType: "buyer",
-      password: "password123",
+      password: bcrypt.hashSync("password123", saltRounds),
       profileImage: null,
       isVerified: true,
       isOnline: true,
@@ -125,7 +128,7 @@ export class MemStorage implements IStorage {
       phone: "+233244987654",
       name: "Auntie Akosua",
       userType: "seller",
-      password: "password123",
+      password: bcrypt.hashSync("password123", saltRounds),
       profileImage: null,
       isVerified: true,
       isOnline: true,
@@ -141,7 +144,7 @@ export class MemStorage implements IStorage {
       phone: "+233244777888",
       name: "Uncle Kwame",
       userType: "seller",
-      password: "password123",
+      password: bcrypt.hashSync("password123", saltRounds),
       profileImage: null,
       isVerified: true,
       isOnline: true,
@@ -157,7 +160,7 @@ export class MemStorage implements IStorage {
       phone: "+233244999000",
       name: "Mama Ama",
       userType: "seller",
-      password: "password123",
+      password: bcrypt.hashSync("password123", saltRounds),
       profileImage: null,
       isVerified: true,
       isOnline: true,
@@ -346,7 +349,7 @@ export class MemStorage implements IStorage {
         phone: kayayo.phone,
         name: kayayo.name,
         userType: "kayayo",
-        password: "password123",
+        password: bcrypt.hashSync("password123", saltRounds),
         profileImage: null,
         isVerified: true,
         isOnline: Math.random() > 0.3, // 70% chance of being online
@@ -391,7 +394,7 @@ export class MemStorage implements IStorage {
         phone: rider.phone,
         name: rider.name,
         userType: "rider",
-        password: "password123",
+        password: bcrypt.hashSync("password123", saltRounds),
         profileImage: null,
         isVerified: true,
         isOnline: Math.random() > 0.4, // 60% chance of being online
