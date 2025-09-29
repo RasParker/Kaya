@@ -1,28 +1,60 @@
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Home, Search, ShoppingCart, Receipt, User } from "lucide-react";
+import { Home, Search, ShoppingCart, Receipt, User, Package, Truck, MapPin, BarChart3 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth.tsx";
 
-const navItems = [
-  { icon: Home, label: "Home", path: "/" },
-  { icon: Search, label: "Browse", path: "/browse" },
-  { icon: ShoppingCart, label: "Cart", path: "/cart" },
-  { icon: Receipt, label: "Orders", path: "/orders" },
-  { icon: User, label: "Profile", path: "/profile" },
-];
+const getNavItemsForUserType = (userType: string | undefined) => {
+  switch (userType) {
+    case 'buyer':
+      return [
+        { icon: Home, label: "Home", path: "/" },
+        { icon: Search, label: "Browse", path: "/browse" },
+        { icon: ShoppingCart, label: "Cart", path: "/cart" },
+        { icon: Receipt, label: "Orders", path: "/orders" },
+        { icon: User, label: "Profile", path: "/profile" },
+      ];
+    case 'seller':
+      return [
+        { icon: BarChart3, label: "Dashboard", path: "/seller/dashboard" },
+        { icon: Package, label: "Products", path: "/seller/products" },
+        { icon: Receipt, label: "Orders", path: "/seller/orders" },
+        { icon: User, label: "Profile", path: "/profile" },
+      ];
+    case 'kayayo':
+      return [
+        { icon: BarChart3, label: "Dashboard", path: "/kayayo/dashboard" },
+        { icon: MapPin, label: "Tasks", path: "/kayayo/tasks" },
+        { icon: User, label: "Profile", path: "/profile" },
+      ];
+    case 'rider':
+      return [
+        { icon: BarChart3, label: "Dashboard", path: "/rider/dashboard" },
+        { icon: Truck, label: "Deliveries", path: "/rider/deliveries" },
+        { icon: User, label: "Profile", path: "/profile" },
+      ];
+    default:
+      // Default for unauthenticated users
+      return [
+        { icon: Home, label: "Home", path: "/" },
+        { icon: Search, label: "Browse", path: "/browse" },
+        { icon: User, label: "Login", path: "/login" },
+      ];
+  }
+};
 
 export default function BottomNav() {
   const [location, setLocation] = useLocation();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
   const { data: cartItems = [] } = useQuery({
     queryKey: ["/api/cart"],
-    enabled: isAuthenticated,
+    enabled: isAuthenticated && user?.userType === 'buyer',
   });
 
-  const cartItemCount = cartItems.length;
+  const cartItemCount = Array.isArray(cartItems) ? cartItems.length : 0;
+  const navItems = getNavItemsForUserType(user?.userType);
 
   return (
     <nav className="bottom-nav">
@@ -45,7 +77,7 @@ export default function BottomNav() {
               <Icon className="h-5 w-5" />
               <span className="text-xs font-medium">{item.label}</span>
               
-              {item.label === "Cart" && cartItemCount > 0 && (
+              {item.label === "Cart" && user?.userType === 'buyer' && cartItemCount > 0 && (
                 <Badge className="cart-badge" data-testid="text-nav-cart-count">
                   {cartItemCount}
                 </Badge>
