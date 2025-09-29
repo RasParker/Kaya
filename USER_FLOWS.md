@@ -217,6 +217,52 @@ This file complements `SPEC.md` by focusing on **UI, UX, and role-specific scree
 
 ---
 
+## Admin Flow (MVP)
+
+### 1. Login
+- **Fields**: Email, Password  
+- **Button**: Login  
+- **Error handling**: Show message on invalid credentials  
+
+### 2. Dashboard (Home)
+- **KPIs at a glance**:  
+  - Active Riders  
+  - Active Drivers  
+  - Ongoing Trips  
+  - Daily Revenue  
+  - Issues flagged  
+
+### 3. User Management
+#### a) Riders
+- **List**: Name, Phone, Email, Join Date, Status  
+- **Actions**: View Details | Suspend/Unsuspend  
+
+#### b) Drivers
+- **List**: Name, Phone, Vehicle, Status, Rating  
+- **Actions**: View Details | Approve/Reject | Suspend/Unsuspend  
+- **Document Verification**: License, ID, Insurance  
+
+### 4. Trips Management
+- **Table**: Trip ID, Rider, Driver, Fare, Status, Date/Time  
+- **Filters**: Rider, Driver, Status (Completed, Cancelled, Ongoing)  
+- **Actions**: Cancel Trip (fraud/system issues)  
+
+### 5. Payments & Earnings
+- **Earnings Dashboard**: Total revenue, Commission cut  
+- **Transaction List**: Trip ID, Driver earnings, Platform share, Date  
+- **Export**: CSV  
+
+### 6. Support / Issues
+- **Complaints List**: User type (Rider/Driver), Message, Date  
+- **Actions**: Mark as Resolved | Escalate  
+
+### 7. Settings (Basic)
+- **Fare Management**: Base fare, Per km, Per minute rates  
+- **Toggle**: Surge pricing (optional MVP+)  
+- **Promo Codes**: Add, Edit, Deactivate (optional)  
+
+
+
 ## Notes
 - This file is meant for **screen-by-screen clarity**.
 - Use it with `SPEC.md` (functional requirements).
