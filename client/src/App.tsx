@@ -9,6 +9,7 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import Login from "@/pages/auth/login";
 import Register from "@/pages/auth/register";
+import AdminLogin from "@/pages/auth/admin-login";
 import Browse from "@/pages/buyer/browse";
 import Cart from "@/pages/buyer/cart";
 import Payment from "@/pages/buyer/payment";
@@ -29,6 +30,7 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
+      <Route path="/admin/login" component={AdminLogin} />
       
       {/* Buyer-only routes */}
       <Route path="/browse">
