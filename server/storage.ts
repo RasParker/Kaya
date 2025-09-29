@@ -135,6 +135,39 @@ export class MemStorage implements IStorage {
     };
     this.users.set(sellerId1, seller1);
 
+    const sellerId2 = randomUUID();
+    const seller2: User = {
+      id: sellerId2,
+      phone: "+233244777888",
+      name: "Uncle Kwame",
+      userType: "seller",
+      password: "password123",
+      profileImage: null,
+      isVerified: true,
+      isOnline: true,
+      rating: "4.65",
+      totalOrders: 98,
+      createdAt: new Date(),
+    };
+    this.users.set(sellerId2, seller2);
+
+    const sellerId3 = randomUUID();
+    const seller3: User = {
+      id: sellerId3,
+      phone: "+233244999000",
+      name: "Mama Ama",
+      userType: "seller",
+      password: "password123",
+      profileImage: null,
+      isVerified: true,
+      isOnline: true,
+      rating: "4.90",
+      totalOrders: 234,
+      createdAt: new Date(),
+    };
+    this.users.set(sellerId3, seller3);
+
+    // Create seller profiles
     const sellerData1: Seller = {
       id: randomUUID(),
       userId: sellerId1,
@@ -148,49 +181,226 @@ export class MemStorage implements IStorage {
     };
     this.sellers.set(sellerData1.id, sellerData1);
 
-    // Create sample products
-    const productId1 = randomUUID();
-    const product1: Product = {
-      id: productId1,
-      sellerId: sellerData1.id,
-      name: "Fresh Tomatoes",
-      category: "vegetables",
-      unit: "per basket",
-      price: "25.00",
-      image: null,
-      isAvailable: true,
-      allowSubstitution: true,
-      description: "Fresh, ripe tomatoes from local farms",
+    const sellerData2: Seller = {
+      id: randomUUID(),
+      userId: sellerId2,
+      stallName: "Kwame's Roots & Tubers",
+      stallLocation: "Section B, Row 2",
+      market: "Makola",
+      specialties: ["Yam", "cassava", "plantain"],
+      openingHours: { start: "05:30", end: "17:30" },
+      languages: ["English", "Twi", "Ga"],
+      verificationBadge: true,
     };
-    this.products.set(productId1, product1);
+    this.sellers.set(sellerData2.id, sellerData2);
+
+    const sellerData3: Seller = {
+      id: randomUUID(),
+      userId: sellerId3,
+      stallName: "Ama's Fish & Seafood",
+      stallLocation: "Section C, Row 1",
+      market: "Makola",
+      specialties: ["Fresh tilapia", "dried fish", "shrimp"],
+      openingHours: { start: "05:00", end: "16:00" },
+      languages: ["English", "Ga"],
+      verificationBadge: true,
+    };
+    this.sellers.set(sellerData3.id, sellerData3);
+
+    // Create sample products
+    const products = [
+      // Akosua's vegetables
+      {
+        sellerId: sellerData1.id,
+        name: "Fresh Tomatoes",
+        category: "vegetables",
+        unit: "per basket",
+        price: "25.00",
+        description: "Fresh, ripe tomatoes from local farms",
+      },
+      {
+        sellerId: sellerData1.id,
+        name: "Red Onions",
+        category: "vegetables", 
+        unit: "per bag",
+        price: "18.00",
+        description: "Sweet red onions, perfect for cooking",
+      },
+      {
+        sellerId: sellerData1.id,
+        name: "Hot Peppers",
+        category: "spices",
+        unit: "per cup",
+        price: "8.00",
+        description: "Spicy hot peppers for your dishes",
+      },
+      {
+        sellerId: sellerData1.id,
+        name: "Garden Eggs",
+        category: "vegetables",
+        unit: "per bowl",
+        price: "12.00",
+        description: "Fresh garden eggs, locally grown",
+      },
+      // Kwame's roots & tubers
+      {
+        sellerId: sellerData2.id,
+        name: "White Yam",
+        category: "roots",
+        unit: "per tuber",
+        price: "15.00",
+        description: "Quality white yam, perfect for fufu",
+      },
+      {
+        sellerId: sellerData2.id,
+        name: "Cassava",
+        category: "roots",
+        unit: "per tuber",
+        price: "8.00",
+        description: "Fresh cassava for gari or cooking",
+      },
+      {
+        sellerId: sellerData2.id,
+        name: "Ripe Plantain",
+        category: "roots",
+        unit: "per bunch",
+        price: "20.00", 
+        description: "Sweet ripe plantain ready to cook",
+      },
+      {
+        sellerId: sellerData2.id,
+        name: "Green Plantain",
+        category: "roots",
+        unit: "per bunch",
+        price: "18.00",
+        description: "Unripe plantain for kelewele or boiling",
+      },
+      // Ama's fish & seafood
+      {
+        sellerId: sellerData3.id,
+        name: "Fresh Tilapia",
+        category: "fish",
+        unit: "per fish",
+        price: "22.00",
+        description: "Fresh tilapia from Lake Volta",
+      },
+      {
+        sellerId: sellerData3.id,
+        name: "Dried Herrings",
+        category: "fish",
+        unit: "per pack",
+        price: "35.00",
+        description: "Smoked dried herrings for soup",
+      },
+      {
+        sellerId: sellerData3.id,
+        name: "Fresh Shrimp",
+        category: "fish",
+        unit: "per cup",
+        price: "45.00",
+        description: "Fresh shrimp from the coast",
+      },
+    ];
+
+    products.forEach((product) => {
+      const productId = randomUUID();
+      const productData: Product = {
+        id: productId,
+        ...product,
+        image: null,
+        isAvailable: true,
+        allowSubstitution: true,
+      };
+      this.products.set(productId, productData);
+    });
 
     // Create sample kayayos
-    const kayayoId1 = randomUUID();
-    const kayayo1: User = {
-      id: kayayoId1,
-      phone: "+233244555666",
-      name: "Adwoa",
-      userType: "kayayo",
-      password: "password123",
-      profileImage: null,
-      isVerified: true,
-      isOnline: true,
-      rating: "4.60",
-      totalOrders: 89,
-      createdAt: new Date(),
-    };
-    this.users.set(kayayoId1, kayayo1);
+    const kayayos = [
+      {
+        name: "Adwoa",
+        phone: "+233244555666",
+        rating: "4.60",
+        totalOrders: 89,
+        location: "Section A",
+      },
+      {
+        name: "Akosua",
+        phone: "+233244555777",
+        rating: "4.75",
+        totalOrders: 156,
+        location: "Section B",
+      },
+      {
+        name: "Efua",
+        phone: "+233244555888",
+        rating: "4.85",
+        totalOrders: 203,
+        location: "Section C",
+      },
+    ];
 
-    const kayayoAvail1: KayayoAvailability = {
-      id: randomUUID(),
-      kayayoId: kayayoId1,
-      market: "Makola",
-      isAvailable: true,
-      currentLocation: "Section A",
-      maxOrders: 3,
-      currentOrders: 0,
-    };
-    this.kayayoAvailability.set(kayayoId1, kayayoAvail1);
+    kayayos.forEach((kayayo) => {
+      const kayayoId = randomUUID();
+      const kayayoUser: User = {
+        id: kayayoId,
+        phone: kayayo.phone,
+        name: kayayo.name,
+        userType: "kayayo",
+        password: "password123",
+        profileImage: null,
+        isVerified: true,
+        isOnline: Math.random() > 0.3, // 70% chance of being online
+        rating: kayayo.rating,
+        totalOrders: kayayo.totalOrders,
+        createdAt: new Date(),
+      };
+      this.users.set(kayayoId, kayayoUser);
+
+      const kayayoAvail: KayayoAvailability = {
+        id: randomUUID(),
+        kayayoId: kayayoId,
+        market: "Makola",
+        isAvailable: Math.random() > 0.2, // 80% chance of being available
+        currentLocation: kayayo.location,
+        maxOrders: Math.floor(Math.random() * 3) + 2, // 2-4 max orders
+        currentOrders: Math.floor(Math.random() * 2), // 0-1 current orders
+      };
+      this.kayayoAvailability.set(kayayoId, kayayoAvail);
+    });
+
+    // Create sample riders
+    const riders = [
+      {
+        name: "Kwaku",
+        phone: "+233244666777",
+        rating: "4.70",
+        totalOrders: 145,
+      },
+      {
+        name: "Kofi",
+        phone: "+233244666888",
+        rating: "4.55",
+        totalOrders: 112,
+      },
+    ];
+
+    riders.forEach((rider) => {
+      const riderId = randomUUID();
+      const riderUser: User = {
+        id: riderId,
+        phone: rider.phone,
+        name: rider.name,
+        userType: "rider",
+        password: "password123",
+        profileImage: null,
+        isVerified: true,
+        isOnline: Math.random() > 0.4, // 60% chance of being online
+        rating: rider.rating,
+        totalOrders: rider.totalOrders,
+        createdAt: new Date(),
+      };
+      this.users.set(riderId, riderUser);
+    });
   }
 
   // Users

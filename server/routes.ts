@@ -262,6 +262,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch("/api/cart/:id", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const cartItem = await storage.updateCartItem(req.params.id, req.body);
+      if (!cartItem) {
+        return res.status(404).json({ message: "Cart item not found" });
+      }
+      res.json(cartItem);
+    } catch (error) {
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+
   app.delete("/api/cart/:id", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
       const success = await storage.removeFromCart(req.params.id);
