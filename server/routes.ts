@@ -398,6 +398,161 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get order items for a specific order
+  app.get("/api/orders/:orderId/items", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const orderItems = await storage.getOrderItemsByOrder(req.params.orderId);
+      
+      // Get product details for each order item
+      const orderItemsWithProducts = await Promise.all(
+        orderItems.map(async (item) => {
+          const product = await storage.getProduct(item.productId);
+          return { ...item, product };
+        })
+      );
+      
+      res.json(orderItemsWithProducts);
+    } catch (error) {
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+
+  // Seller confirms/accepts order items
+  app.patch("/api/orders/:orderId/items/:itemId/confirm", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      // Only sellers can confirm order items
+      if (req.user!.userType !== 'seller') {
+        return res.status(403).json({ message: "Only sellers can confirm order items" });
+      }
+
+      // Get the order item to verify seller ownership
+      const orderItem = await storage.getOrderItem(req.params.itemId);
+      if (!orderItem) {
+        return res.status(404).json({ message: "Order item not found" });
+      }
+
+      // Get seller profile to verify this seller owns this order item
+      const sellerProfile = await storage.getSellerByUserId(req.user!.userId);
+      if (!sellerProfile || orderItem.sellerId !== sellerProfile.id) {
+        return res.status(403).json({ message: "You can only confirm your own order items" });
+      }
+
+      const updatedOrderItem = await storage.updateOrderItem(req.params.itemId, {
+        isConfirmed: true
+      });
+      
+      if (!updatedOrderItem) {
+        return res.status(404).json({ message: "Order item not found" });
+      }
+      
+      // Check if all items in the order are confirmed
+      const allOrderItems = await storage.getOrderItemsByOrder(req.params.orderId);
+      const allConfirmed = allOrderItems.every(item => item.isConfirmed || item.id === updatedOrderItem.id);
+      
+      if (allConfirmed) {
+        // Update order status to accepted
+        const order = await storage.updateOrder(req.params.orderId, {
+          status: "accepted",
+          confirmedAt: new Date()
+        });
+        
+        if (order) {
+          broadcastToUser(order.buyerId, {
+            type: 'ORDER_ACCEPTED',
+            order
+          });
+        }
+      }
+      
+      res.json(updatedOrderItem);
+    } catch (error) {
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+
+  // Get available orders for kayayos (orders that need shopping)
+  app.get("/api/orders/available-for-kayayo", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      // Only kayayos can view available orders
+      if (req.user!.userType !== 'kayayo') {
+        return res.status(403).json({ message: "Only kayayos can view available orders" });
+      }
+
+      // Get orders that are accepted but don't have kayayo assigned yet
+      const orders = Array.from((storage as any).orders.values()).filter((order: any) => 
+        order.status === 'accepted' && !order.kayayoId
+      );
+      
+      res.json(orders);
+    } catch (error) {
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+
+  // Get available deliveries for riders (orders ready for pickup)
+  app.get("/api/orders/available-for-rider", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      // Only riders can view available deliveries
+      if (req.user!.userType !== 'rider') {
+        return res.status(403).json({ message: "Only riders can view available deliveries" });
+      }
+
+      // Get orders that are ready for pickup but don't have rider assigned yet
+      const orders = Array.from((storage as any).orders.values()).filter((order: any) => 
+        order.status === 'ready_for_pickup' && !order.riderId
+      );
+      
+      res.json(orders);
+    } catch (error) {
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+
+  // Kayayo marks shopping as complete and ready for rider pickup
+  app.patch("/api/orders/:orderId/ready-for-pickup", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      // Only kayayos can mark orders as ready for pickup
+      if (req.user!.userType !== 'kayayo') {
+        return res.status(403).json({ message: "Only kayayos can mark orders as ready for pickup" });
+      }
+
+      // Get the order to verify kayayo ownership
+      const order = await storage.getOrder(req.params.orderId);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      // Only the assigned kayayo can mark the order as ready
+      if (order.kayayoId !== req.user!.userId) {
+        return res.status(403).json({ message: "You can only complete orders assigned to you" });
+      }
+
+      const updatedOrder = await storage.updateOrder(req.params.orderId, {
+        status: "ready_for_pickup"
+      });
+      
+      if (!updatedOrder) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+      
+      // Mark all order items as picked
+      const orderItems = await storage.getOrderItemsByOrder(req.params.orderId);
+      await Promise.all(orderItems.map(item => 
+        storage.updateOrderItem(item.id, { isPicked: true })
+      ));
+      
+      // Broadcast to buyer and available riders
+      broadcastToUser(updatedOrder.buyerId, {
+        type: 'ORDER_READY_FOR_PICKUP',
+        order: updatedOrder
+      });
+      
+      res.json(updatedOrder);
+    } catch (error) {
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+
   // Kayayo routes
   app.get("/api/kayayos/available", async (req, res) => {
     try {

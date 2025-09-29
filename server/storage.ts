@@ -401,6 +401,271 @@ export class MemStorage implements IStorage {
       };
       this.users.set(riderId, riderUser);
     });
+
+    // Create sample orders to demonstrate different workflow states
+    this.createSampleOrders();
+  }
+
+  private createSampleOrders() {
+    const buyerUser = Array.from(this.users.values()).find(u => u.userType === 'buyer');
+    const sellerUsers = Array.from(this.users.values()).filter(u => u.userType === 'seller');
+    const kayayoUsers = Array.from(this.users.values()).filter(u => u.userType === 'kayayo');
+    const riderUsers = Array.from(this.users.values()).filter(u => u.userType === 'rider');
+    
+    if (!buyerUser || sellerUsers.length === 0) return;
+
+    const sellers = Array.from(this.sellers.values());
+    const products = Array.from(this.products.values());
+
+    // Sample Order 1: Pending order (just placed by buyer)
+    const order1Id = randomUUID();
+    const order1: Order = {
+      id: order1Id,
+      buyerId: buyerUser.id,
+      kayayoId: null,
+      riderId: null,
+      status: "pending",
+      totalAmount: "43.00",
+      deliveryAddress: "East Legon, Accra - Near Shell Station",
+      deliveryFee: "8.00",
+      kayayoFee: "5.00",
+      platformFee: "2.00",
+      estimatedDeliveryTime: 90,
+      paymentMethod: "momo",
+      createdAt: new Date(Date.now() - 15 * 60 * 1000), // 15 minutes ago
+      confirmedAt: null,
+      deliveredAt: null
+    };
+    this.orders.set(order1Id, order1);
+
+    // Order items for Order 1
+    const orderItem1Id = randomUUID();
+    const orderItem1: OrderItem = {
+      id: orderItem1Id,
+      orderId: order1Id,
+      productId: products[0].id, // Fresh Tomatoes
+      sellerId: products[0].sellerId,
+      quantity: 2,
+      unitPrice: products[0].price,
+      subtotal: "50.00",
+      notes: "Please select the ripest ones",
+      isConfirmed: false,
+      isPicked: false,
+      substitutedWith: null
+    };
+    this.orderItems.set(orderItem1Id, orderItem1);
+
+    // Sample Order 2: Accepted by seller, ready for kayayo
+    const order2Id = randomUUID();
+    const order2: Order = {
+      id: order2Id,
+      buyerId: buyerUser.id,
+      kayayoId: null,
+      riderId: null,
+      status: "accepted",
+      totalAmount: "65.00",
+      deliveryAddress: "Tema Station - Near the main market entrance",
+      deliveryFee: "12.00",
+      kayayoFee: "8.00",
+      platformFee: "3.00",
+      estimatedDeliveryTime: 120,
+      paymentMethod: "cash",
+      createdAt: new Date(Date.now() - 45 * 60 * 1000), // 45 minutes ago
+      confirmedAt: new Date(Date.now() - 30 * 60 * 1000), // 30 minutes ago
+      deliveredAt: null
+    };
+    this.orders.set(order2Id, order2);
+
+    // Order items for Order 2
+    const orderItem2Id = randomUUID();
+    const orderItem2: OrderItem = {
+      id: orderItem2Id,
+      orderId: order2Id,
+      productId: products[4].id, // White Yam
+      sellerId: products[4].sellerId,
+      quantity: 3,
+      unitPrice: products[4].price,
+      subtotal: "45.00",
+      notes: "Medium sized yams please",
+      isConfirmed: true,
+      isPicked: false,
+      substitutedWith: null
+    };
+    this.orderItems.set(orderItem2Id, orderItem2);
+
+    // Sample Order 3: Kayayo shopping (in progress)
+    const order3Id = randomUUID();
+    const activeKayayo = kayayoUsers[0];
+    const order3: Order = {
+      id: order3Id,
+      buyerId: buyerUser.id,
+      kayayoId: activeKayayo?.id || null,
+      riderId: null,
+      status: "shopping",
+      totalAmount: "78.00",
+      deliveryAddress: "Spintex Road - Opposite the Police Station",
+      deliveryFee: "15.00",
+      kayayoFee: "10.00",
+      platformFee: "3.00",
+      estimatedDeliveryTime: 140,
+      paymentMethod: "momo",
+      createdAt: new Date(Date.now() - 90 * 60 * 1000), // 1.5 hours ago
+      confirmedAt: new Date(Date.now() - 75 * 60 * 1000), // 1 hour 15 minutes ago
+      deliveredAt: null
+    };
+    this.orders.set(order3Id, order3);
+
+    // Order items for Order 3
+    const orderItem3aId = randomUUID();
+    const orderItem3a: OrderItem = {
+      id: orderItem3aId,
+      orderId: order3Id,
+      productId: products[8].id, // Fresh Tilapia
+      sellerId: products[8].sellerId,
+      quantity: 2,
+      unitPrice: products[8].price,
+      subtotal: "44.00",
+      notes: "Clean and cut please",
+      isConfirmed: true,
+      isPicked: true,
+      substitutedWith: null
+    };
+    this.orderItems.set(orderItem3aId, orderItem3a);
+
+    const orderItem3bId = randomUUID();
+    const orderItem3b: OrderItem = {
+      id: orderItem3bId,
+      orderId: order3Id,
+      productId: products[1].id, // Red Onions
+      sellerId: products[1].sellerId,
+      quantity: 1,
+      unitPrice: products[1].price,
+      subtotal: "18.00",
+      notes: null,
+      isConfirmed: true,
+      isPicked: false, // Still shopping for this
+      substitutedWith: null
+    };
+    this.orderItems.set(orderItem3bId, orderItem3b);
+
+    // Sample Order 4: Ready for pickup (waiting for rider)
+    const order4Id = randomUUID();
+    const completedKayayo = kayayoUsers[1];
+    const order4: Order = {
+      id: order4Id,
+      buyerId: buyerUser.id,
+      kayayoId: completedKayayo?.id || null,
+      riderId: null,
+      status: "ready_for_pickup",
+      totalAmount: "92.00",
+      deliveryAddress: "Airport Residential Area - House No. 45B",
+      deliveryFee: "18.00",
+      kayayoFee: "12.00",
+      platformFee: "4.00",
+      estimatedDeliveryTime: 160,
+      paymentMethod: "momo",
+      createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
+      confirmedAt: new Date(Date.now() - 105 * 60 * 1000), // 1 hour 45 minutes ago
+      deliveredAt: null
+    };
+    this.orders.set(order4Id, order4);
+
+    // Order items for Order 4 (all picked)
+    const orderItem4Id = randomUUID();
+    const orderItem4: OrderItem = {
+      id: orderItem4Id,
+      orderId: order4Id,
+      productId: products[9].id, // Dried Herrings
+      sellerId: products[9].sellerId,
+      quantity: 2,
+      unitPrice: products[9].price,
+      subtotal: "70.00",
+      notes: "Extra dried please",
+      isConfirmed: true,
+      isPicked: true,
+      substitutedWith: null
+    };
+    this.orderItems.set(orderItem4Id, orderItem4);
+
+    // Sample Order 5: Out for delivery
+    const order5Id = randomUUID();
+    const deliveryKayayo = kayayoUsers[2];
+    const activeRider = riderUsers[0];
+    const order5: Order = {
+      id: order5Id,
+      buyerId: buyerUser.id,
+      kayayoId: deliveryKayayo?.id || null,
+      riderId: activeRider?.id || null,
+      status: "in_transit",
+      totalAmount: "54.00",
+      deliveryAddress: "Dansoman - Last Stop, Blue House",
+      deliveryFee: "10.00",
+      kayayoFee: "7.00",
+      platformFee: "2.00",
+      estimatedDeliveryTime: 100,
+      paymentMethod: "cash",
+      createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000), // 3 hours ago
+      confirmedAt: new Date(Date.now() - 165 * 60 * 1000), // 2 hours 45 minutes ago
+      deliveredAt: null
+    };
+    this.orders.set(order5Id, order5);
+
+    // Order items for Order 5
+    const orderItem5Id = randomUUID();
+    const orderItem5: OrderItem = {
+      id: orderItem5Id,
+      orderId: order5Id,
+      productId: products[6].id, // Ripe Plantain
+      sellerId: products[6].sellerId,
+      quantity: 1,
+      unitPrice: products[6].price,
+      subtotal: "20.00",
+      notes: "Very ripe for boiling",
+      isConfirmed: true,
+      isPicked: true,
+      substitutedWith: null
+    };
+    this.orderItems.set(orderItem5Id, orderItem5);
+
+    // Sample Order 6: Delivered (completed)
+    const order6Id = randomUUID();
+    const pastKayayo = kayayoUsers[0];
+    const pastRider = riderUsers[1];
+    const order6: Order = {
+      id: order6Id,
+      buyerId: buyerUser.id,
+      kayayoId: pastKayayo?.id || null,
+      riderId: pastRider?.id || null,
+      status: "delivered",
+      totalAmount: "37.00",
+      deliveryAddress: "Kaneshie Market - Behind the main lorry station",
+      deliveryFee: "6.00",
+      kayayoFee: "4.00",
+      platformFee: "2.00",
+      estimatedDeliveryTime: 80,
+      paymentMethod: "momo",
+      createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000), // 24 hours ago
+      confirmedAt: new Date(Date.now() - 23.5 * 60 * 60 * 1000), // 23.5 hours ago
+      deliveredAt: new Date(Date.now() - 22 * 60 * 60 * 1000) // 22 hours ago
+    };
+    this.orders.set(order6Id, order6);
+
+    // Order items for Order 6
+    const orderItem6Id = randomUUID();
+    const orderItem6: OrderItem = {
+      id: orderItem6Id,
+      orderId: order6Id,
+      productId: products[2].id, // Hot Peppers
+      sellerId: products[2].sellerId,
+      quantity: 3,
+      unitPrice: products[2].price,
+      subtotal: "24.00",
+      notes: "Not too spicy please",
+      isConfirmed: true,
+      isPicked: true,
+      substitutedWith: null
+    };
+    this.orderItems.set(orderItem6Id, orderItem6);
   }
 
   // Users
@@ -602,8 +867,12 @@ export class MemStorage implements IStorage {
   }
 
   async getOrdersBySeller(sellerId: string): Promise<Order[]> {
-    // This would need to be implemented by joining with order items
-    return [];
+    // Get orders that have items from this seller
+    const orderItemsForSeller = Array.from(this.orderItems.values()).filter(item => item.sellerId === sellerId);
+    const uniqueOrderIds = new Set(orderItemsForSeller.map(item => item.orderId));
+    const orderIds = Array.from(uniqueOrderIds);
+    
+    return Array.from(this.orders.values()).filter(order => orderIds.includes(order.id));
   }
 
   async getOrdersByKayayo(kayayoId: string): Promise<Order[]> {
