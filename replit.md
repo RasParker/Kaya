@@ -12,11 +12,11 @@ This is a marketplace application called "rest-express" designed for connecting 
 - Integrated all admin backend API routes with proper authentication and authorization
 - Admin portal now provides complete oversight over users, orders, payments, and disputes
 
-**2025-09-30**: GitHub import successfully configured for Replit environment
+**2025-09-30**: Database and storage configuration
+- Using PostgresStorage with Neon Database for data persistence
+- Database schema synchronized with missing columns added (email, is_suspended, is_active)
 - Configured workflow to run development server on port 5000 with webview output
-- Switched storage from PostgresStorage to MemStorage for development (with seed data)
 - Verified build and deployment configuration for production
-- Application fully functional with in-memory storage containing sample users, sellers, products, and orders
 
 # User Preferences
 
