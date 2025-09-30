@@ -116,6 +116,24 @@ export const kayayoAvailability = pgTable("kayayo_availability", {
   currentOrders: integer("current_orders").default(0),
 });
 
+// Disputes
+export const disputes = pgTable("disputes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  orderId: varchar("order_id").notNull().references(() => orders.id),
+  reportedBy: varchar("reported_by").notNull().references(() => users.id),
+  reportedAgainst: varchar("reported_against").references(() => users.id),
+  disputeType: text("dispute_type").notNull(), // 'missing_items', 'late_delivery', 'wrong_items', 'quality_issue', 'payment_issue', 'other'
+  status: text("status").notNull().default("pending"), // 'pending', 'under_review', 'resolved', 'rejected'
+  description: text("description").notNull(),
+  evidence: text("evidence").array(), // URLs to uploaded photos/documents
+  resolution: text("resolution"),
+  refundAmount: decimal("refund_amount", { precision: 10, scale: 2 }),
+  penaltyAmount: decimal("penalty_amount", { precision: 10, scale: 2 }),
+  resolvedBy: varchar("resolved_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  resolvedAt: timestamp("resolved_at"),
+});
+
 // Create insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -156,6 +174,12 @@ export const insertKayayoAvailabilitySchema = createInsertSchema(kayayoAvailabil
   id: true,
 });
 
+export const insertDisputeSchema = createInsertSchema(disputes).omit({
+  id: true,
+  createdAt: true,
+  resolvedAt: true,
+});
+
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -180,3 +204,6 @@ export type Review = typeof reviews.$inferSelect;
 
 export type InsertKayayoAvailability = z.infer<typeof insertKayayoAvailabilitySchema>;
 export type KayayoAvailability = typeof kayayoAvailability.$inferSelect;
+
+export type InsertDispute = z.infer<typeof insertDisputeSchema>;
+export type Dispute = typeof disputes.$inferSelect;

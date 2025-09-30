@@ -14,7 +14,9 @@ import {
   type Review,
   type InsertReview,
   type KayayoAvailability,
-  type InsertKayayoAvailability
+  type InsertKayayoAvailability,
+  type Dispute,
+  type InsertDispute
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import bcrypt from "bcrypt";
@@ -83,6 +85,14 @@ export interface IStorage {
   createKayayoAvailability(availability: InsertKayayoAvailability): Promise<KayayoAvailability>;
   updateKayayoAvailability(kayayoId: string, availability: Partial<KayayoAvailability>): Promise<KayayoAvailability | undefined>;
   getAvailableKayayos(market: string): Promise<KayayoAvailability[]>;
+
+  // Disputes
+  getDispute(id: string): Promise<Dispute | undefined>;
+  createDispute(dispute: InsertDispute): Promise<Dispute>;
+  updateDispute(id: string, dispute: Partial<Dispute>): Promise<Dispute | undefined>;
+  getAllDisputes(): Promise<Dispute[]>;
+  getDisputesByOrder(orderId: string): Promise<Dispute[]>;
+  getDisputesByStatus(status: string): Promise<Dispute[]>;
 }
 
 
@@ -342,6 +352,34 @@ export class PostgresStorage implements IStorage {
         eq(schema.kayayoAvailability.isAvailable, true)
       )
     );
+  }
+
+  // Disputes
+  async getDispute(id: string): Promise<Dispute | undefined> {
+    const result = await this.db.select().from(schema.disputes).where(eq(schema.disputes.id, id)).limit(1);
+    return result[0];
+  }
+
+  async createDispute(insertDispute: InsertDispute): Promise<Dispute> {
+    const result = await this.db.insert(schema.disputes).values(insertDispute).returning();
+    return result[0];
+  }
+
+  async updateDispute(id: string, disputeUpdate: Partial<Dispute>): Promise<Dispute | undefined> {
+    const result = await this.db.update(schema.disputes).set(disputeUpdate).where(eq(schema.disputes.id, id)).returning();
+    return result[0];
+  }
+
+  async getAllDisputes(): Promise<Dispute[]> {
+    return await this.db.select().from(schema.disputes);
+  }
+
+  async getDisputesByOrder(orderId: string): Promise<Dispute[]> {
+    return await this.db.select().from(schema.disputes).where(eq(schema.disputes.orderId, orderId));
+  }
+
+  async getDisputesByStatus(status: string): Promise<Dispute[]> {
+    return await this.db.select().from(schema.disputes).where(eq(schema.disputes.status, status));
   }
 }
 
