@@ -357,7 +357,7 @@ export default function AdminPayments() {
                           </span>
                         </TableCell>
                         <TableCell className="text-right">
-                          {transaction.status === "held" && (
+                          {(transaction.status === "held" || transaction.status === "frozen") && (
                             <Button
                               size="sm"
                               variant="outline"
