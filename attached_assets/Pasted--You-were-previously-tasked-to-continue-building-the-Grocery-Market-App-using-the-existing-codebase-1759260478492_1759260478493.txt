@@ -1,0 +1,42 @@
+
+You were previously tasked to continue building the Grocery Market App using the existing codebase in this workspace.
+
+
+You were instructed to use these two reference files for guidance:
+SPEC.md → functional requirements and flows (all roles, including Admin).
+USER_FLOWS.md → detailed screen-by-screen user journeys.
+Tasks:
+Begin implementing the Admin Portal as described in SPEC.md and USER_FLOWS.md:
+Admin login with email/password.
+Admin dashboard with KPIs (active users, trips, revenue, issues).
+User Management: approve/suspend/remove accounts, verify IDs.
+Order Monitoring: view active orders, track delays, reassign if needed.
+Payments & Escrow: show amounts held/released, freeze suspicious payments, export reports.
+Dispute Resolution: review complaints, evidence, and issue refunds/penalties.
+Marketplace Setup: add new markets, approve seller categories.
+Ratings & Trust: monitor low-rated/fake accounts.
+Analytics: user activity, delivery times, top-selling items, busiest markets.
+Make sure Admin is a separate role with its own login and interface (not mixed with Buyer/Seller/etc).
+Keep all UI layouts aligned with the details in USER_FLOWS.md.
+Do not overwrite SPEC.md or USER_FLOWS.md — only use them as references.
+Objective: Build forward from the current MVP, ensuring each role (Buyer, Seller, Kayayo, Rider, Admin) has a working dashboard with role-specific actions and connected flows.
+
+
+According to the progress tracker below, you had completed 7 out of 11 tasks.
+
+
+In progress tasks 7 / 11
+
+Set up data storage, update settings > COMPLETED
+Define all data tables correctly > COMPLETED
+Use new data storage only > COMPLETED
+Add starting data for testing > COMPLETED
+Check order details work with storage > COMPLETED
+Create admin page with key numbers > COMPLETED
+Manage users: approve, suspend, remove > COMPLETED
+Monitor orders, track delays, reassign
+Manage payments and escrow funds
+Resolve disputes, issue refunds/penalties
+Add admin access, test portal
+
+Now, I need you to continue from where you left off till completion 11 / 11
