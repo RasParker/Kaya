@@ -64,6 +64,7 @@ export interface IStorage {
   getOrdersByKayayo(kayayoId: string): Promise<Order[]>;
   getOrdersByRider(riderId: string): Promise<Order[]>;
   getPendingOrders(): Promise<Order[]>;
+  getAllOrders(): Promise<Order[]>;
 
   // Order Items
   getOrderItem(id: string): Promise<OrderItem | undefined>;
@@ -273,6 +274,10 @@ export class PostgresStorage implements IStorage {
 
   async getPendingOrders(): Promise<Order[]> {
     return await this.db.select().from(schema.orders).where(eq(schema.orders.status, 'pending'));
+  }
+
+  async getAllOrders(): Promise<Order[]> {
+    return await this.db.select().from(schema.orders);
   }
 
   // Order Items

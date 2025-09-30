@@ -1037,5 +1037,90 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin routes
+  app.get("/api/admin/stats", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      // Verify admin user
+      if (req.user!.userType !== 'admin') {
+        return res.status(403).json({ message: "Unauthorized: Admin access required" });
+      }
+
+      // Get user counts by type
+      const buyers = await storage.getUsersByType('buyer');
+      const sellers = await storage.getUsersByType('seller');
+      const kayayos = await storage.getUsersByType('kayayo');
+      const riders = await storage.getUsersByType('rider');
+
+      // Get all orders
+      const allOrders = await storage.getAllOrders();
+      
+      // Calculate order stats
+      const pendingOrders = allOrders.filter(o => o.status === 'pending');
+      const activeOrders = allOrders.filter(o => 
+        ['seller_confirmed', 'kayayo_accepted', 'shopping', 'ready_for_pickup', 'in_transit'].includes(o.status)
+      );
+      const completedOrders = allOrders.filter(o => o.status === 'delivered');
+
+      // Calculate revenue from platform fees
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const thisWeekStart = new Date();
+      thisWeekStart.setDate(today.getDate() - 7);
+      thisWeekStart.setHours(0, 0, 0, 0);
+      
+      const thisMonthStart = new Date();
+      thisMonthStart.setDate(1);
+      thisMonthStart.setHours(0, 0, 0, 0);
+
+      const todayRevenue = completedOrders
+        .filter(o => o.deliveredAt && new Date(o.deliveredAt) >= today)
+        .reduce((sum, o) => sum + parseFloat(o.platformFee || "0"), 0);
+
+      const weekRevenue = completedOrders
+        .filter(o => o.deliveredAt && new Date(o.deliveredAt) >= thisWeekStart)
+        .reduce((sum, o) => sum + parseFloat(o.platformFee || "0"), 0);
+
+      const monthRevenue = completedOrders
+        .filter(o => o.deliveredAt && new Date(o.deliveredAt) >= thisMonthStart)
+        .reduce((sum, o) => sum + parseFloat(o.platformFee || "0"), 0);
+
+      // Get issues - unverified users (treated as flagged/pending verification)
+      const unverifiedUsers = buyers.concat(sellers, kayayos, riders)
+        .filter(u => u.isVerified === false).length;
+
+      const stats = {
+        users: {
+          buyers: buyers.length,
+          sellers: sellers.length,
+          kayayos: kayayos.length,
+          riders: riders.length,
+          total: buyers.length + sellers.length + kayayos.length + riders.length
+        },
+        orders: {
+          pending: pendingOrders.length,
+          active: activeOrders.length,
+          completed: completedOrders.length,
+          total: allOrders.length
+        },
+        revenue: {
+          today: todayRevenue,
+          thisWeek: weekRevenue,
+          thisMonth: monthRevenue
+        },
+        issues: {
+          disputes: 0, // Will implement in disputes task
+          suspendedUsers: unverifiedUsers,
+          flaggedOrders: 0 // Will implement in order monitoring task
+        }
+      };
+
+      res.json(stats);
+    } catch (error) {
+      console.error('Admin stats error:', error);
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+
   return httpServer;
 }
