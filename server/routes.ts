@@ -66,9 +66,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth routes
   app.post("/api/auth/register", async (req, res) => {
     try {
-      console.log('Registration request body:', JSON.stringify(req.body, null, 2));
       const userData = insertUserSchema.parse(req.body);
-      console.log('Parsed user data:', JSON.stringify(userData, null, 2));
       
       // SECURITY: Prevent public admin creation
       if (userData.userType === 'admin') {
@@ -138,9 +136,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ user: { ...user, password: undefined }, token });
     } catch (error) {
       console.error('Registration error:', error);
-      if (error instanceof Error) {
-        console.error('Error message:', error.message);
-      }
       res.status(400).json({ message: "Invalid registration data" });
     }
   });
