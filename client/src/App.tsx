@@ -20,6 +20,7 @@ import SellerDashboard from "@/pages/seller/dashboard";
 import SellerProducts from "@/pages/seller/products";
 import SellerOrders from "@/pages/seller/orders";
 import KayayoDashboard from "@/pages/kayayo/dashboard";
+import KayayoTasks from "@/pages/kayayo/tasks";
 import KayayoOrderDetails from "@/pages/kayayo/order-details";
 import RiderDashboard from "@/pages/rider/dashboard";
 import AdminDashboard from "@/pages/admin/dashboard";
@@ -92,6 +93,11 @@ function Router() {
       <Route path="/kayayo/dashboard">
         <ProtectedRoute allowedRoles={['kayayo']}>
           <KayayoDashboard />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/kayayo/tasks">
+        <ProtectedRoute allowedRoles={['kayayo']}>
+          <KayayoTasks />
         </ProtectedRoute>
       </Route>
       <Route path="/kayayo/order/:orderId">
