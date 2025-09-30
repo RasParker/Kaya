@@ -4,6 +4,14 @@ This is a marketplace application called "rest-express" designed for connecting 
 
 ## Recent Changes
 
+**2025-09-30**: Completed comprehensive admin portal with full operational control
+- Built admin orders monitoring page with status filters, delay tracking, and order reassignment capabilities
+- Implemented payments & escrow management dashboard with transaction tracking, freeze functionality, and CSV export
+- Created disputes resolution system with evidence review, refund issuance, and penalty management
+- Added disputes table to database schema with support for order-related disputes and resolutions
+- Integrated all admin backend API routes with proper authentication and authorization
+- Admin portal now provides complete oversight over users, orders, payments, and disputes
+
 **2025-09-30**: GitHub import successfully configured for Replit environment
 - Configured workflow to run development server on port 5000 with webview output
 - Switched storage from PostgresStorage to MemStorage for development (with seed data)
@@ -30,7 +38,7 @@ The application follows a modern full-stack architecture with a React frontend a
 
 **ORM and Database**: Drizzle ORM with PostgreSQL as the primary database, configured through Neon Database serverless connections for scalable cloud deployment.
 
-**Schema Design**: The database schema includes tables for users, sellers, products, cart items, orders, reviews, and kayayo availability. All tables use UUID primary keys for better distribution and security.
+**Schema Design**: The database schema includes tables for users, sellers, products, cart items, orders, reviews, kayayo availability, and disputes. All tables use UUID primary keys for better distribution and security. The disputes table supports order-related dispute management with evidence tracking and resolution workflows.
 
 **Migrations**: Database schema changes are managed through Drizzle migrations with a dedicated configuration file.
 
