@@ -1038,6 +1038,105 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin routes
+  // Get all users
+  app.get("/api/admin/users", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      // Verify admin user
+      if (req.user!.userType !== 'admin') {
+        return res.status(403).json({ message: "Unauthorized: Admin access required" });
+      }
+
+      const buyers = await storage.getUsersByType('buyer');
+      const sellers = await storage.getUsersByType('seller');
+      const kayayos = await storage.getUsersByType('kayayo');
+      const riders = await storage.getUsersByType('rider');
+      const admins = await storage.getUsersByType('admin');
+
+      // Filter out inactive (soft-deleted) users
+      const allUsers = [...buyers, ...sellers, ...kayayos, ...riders, ...admins]
+        .filter(user => user.isActive !== false);
+      
+      res.json(allUsers);
+    } catch (error) {
+      console.error('Get users error:', error);
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+
+  // Verify a user
+  app.patch("/api/admin/users/:id/verify", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      // Verify admin user
+      if (req.user!.userType !== 'admin') {
+        return res.status(403).json({ message: "Unauthorized: Admin access required" });
+      }
+
+      const user = await storage.updateUser(req.params.id, { isVerified: true });
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      res.json({ message: "User verified successfully", user });
+    } catch (error) {
+      console.error('Verify user error:', error);
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+
+  // Suspend/unsuspend a user
+  app.patch("/api/admin/users/:id/suspend", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      // Verify admin user
+      if (req.user!.userType !== 'admin') {
+        return res.status(403).json({ message: "Unauthorized: Admin access required" });
+      }
+
+      const { suspend } = req.body;
+      
+      // Suspend means setting isSuspended flag, verification status stays intact
+      const user = await storage.updateUser(req.params.id, { isSuspended: suspend });
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      res.json({ 
+        message: suspend ? "User suspended successfully" : "User unsuspended successfully",
+        user 
+      });
+    } catch (error) {
+      console.error('Suspend user error:', error);
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+
+  // Delete a user
+  app.delete("/api/admin/users/:id", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      // Verify admin user
+      if (req.user!.userType !== 'admin') {
+        return res.status(403).json({ message: "Unauthorized: Admin access required" });
+      }
+
+      // Prevent deleting admin users
+      const userToDelete = await storage.getUser(req.params.id);
+      if (!userToDelete) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      if (userToDelete.userType === 'admin') {
+        return res.status(403).json({ message: "Cannot delete admin users" });
+      }
+
+      // Soft delete by setting isActive to false
+      await storage.updateUser(req.params.id, { isActive: false, isOnline: false });
+
+      res.json({ message: "User removed successfully" });
+    } catch (error) {
+      console.error('Delete user error:', error);
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+
   app.get("/api/admin/stats", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
       // Verify admin user

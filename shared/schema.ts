@@ -14,6 +14,8 @@ export const users = pgTable("users", {
   profileImage: text("profile_image"),
   isVerified: boolean("is_verified").default(false),
   isOnline: boolean("is_online").default(false),
+  isSuspended: boolean("is_suspended").default(false),
+  isActive: boolean("is_active").default(true),
   rating: decimal("rating", { precision: 3, scale: 2 }).default("0.00"),
   totalOrders: integer("total_orders").default(0),
   createdAt: timestamp("created_at").defaultNow(),

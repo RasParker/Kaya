@@ -23,6 +23,7 @@ import KayayoDashboard from "@/pages/kayayo/dashboard";
 import KayayoOrderDetails from "@/pages/kayayo/order-details";
 import RiderDashboard from "@/pages/rider/dashboard";
 import AdminDashboard from "@/pages/admin/dashboard";
+import AdminUsers from "@/pages/admin/users";
 
 function Router() {
   return (
@@ -107,6 +108,11 @@ function Router() {
       <Route path="/admin/dashboard">
         <ProtectedRoute allowedRoles={['admin']}>
           <AdminDashboard />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/admin/users">
+        <ProtectedRoute allowedRoles={['admin']}>
+          <AdminUsers />
         </ProtectedRoute>
       </Route>
       
