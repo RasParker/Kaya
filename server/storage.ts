@@ -92,6 +92,8 @@ export class PostgresStorage implements IStorage {
     if (!process.env.DATABASE_URL) {
       throw new Error('DATABASE_URL is required for PostgreSQL storage');
     }
+    // Note: neon-http handles SSL automatically via the DATABASE_URL connection string
+    // No need for explicit SSL certificate configuration like with node-postgres
     const sql = neon(process.env.DATABASE_URL, {
       fetchOptions: {
         cache: 'no-store',

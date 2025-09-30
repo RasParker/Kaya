@@ -191,7 +191,7 @@ async function seed() {
       kayayoId: null,
       riderId: null,
       status: 'pending',
-      totalAmount: '43.00',
+      totalAmount: '92.00',
       deliveryAddress: 'East Legon, Accra - Near Shell Station',
       deliveryFee: '8.00',
       kayayoFee: '5.00',
@@ -200,6 +200,50 @@ async function seed() {
       paymentMethod: 'momo',
     });
     console.log('✓ Created sample order');
+
+    // Get products for order items
+    const allProducts = await storage.getProductsBySeller(sellerData1.id);
+    if (allProducts.length >= 3) {
+      await storage.createOrderItem({
+        orderId: order.id,
+        productId: allProducts[0].id,
+        sellerId: sellerData1.id,
+        quantity: 2,
+        unitPrice: allProducts[0].price,
+        subtotal: String(2 * parseFloat(allProducts[0].price)),
+        notes: null,
+        isConfirmed: false,
+        isPicked: false,
+        substitutedWith: null,
+      });
+
+      await storage.createOrderItem({
+        orderId: order.id,
+        productId: allProducts[1].id,
+        sellerId: sellerData1.id,
+        quantity: 1,
+        unitPrice: allProducts[1].price,
+        subtotal: allProducts[1].price,
+        notes: null,
+        isConfirmed: false,
+        isPicked: false,
+        substitutedWith: null,
+      });
+
+      await storage.createOrderItem({
+        orderId: order.id,
+        productId: allProducts[2].id,
+        sellerId: sellerData1.id,
+        quantity: 3,
+        unitPrice: allProducts[2].price,
+        subtotal: String(3 * parseFloat(allProducts[2].price)),
+        notes: null,
+        isConfirmed: false,
+        isPicked: false,
+        substitutedWith: null,
+      });
+      console.log('✓ Created 3 order items');
+    }
 
     console.log('\n✅ Database seeding completed successfully!');
     console.log('\n📝 Test credentials:');
