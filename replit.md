@@ -2,6 +2,14 @@
 
 This is a marketplace application called "rest-express" designed for connecting buyers with sellers in Ghana's markets, particularly Makola Market. The platform supports multiple user types including buyers, sellers, kayayo (market porters), and riders, creating a comprehensive ecosystem for local market commerce and delivery services.
 
+## Recent Changes
+
+**2025-09-30**: GitHub import successfully configured for Replit environment
+- Configured workflow to run development server on port 5000 with webview output
+- Switched storage from PostgresStorage to MemStorage for development (with seed data)
+- Verified build and deployment configuration for production
+- Application fully functional with in-memory storage containing sample users, sellers, products, and orders
+
 # User Preferences
 
 Preferred communication style: Simple, everyday language.

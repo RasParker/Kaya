@@ -1,0 +1,43 @@
+You were previously tasked to continue building the Grocery Market App using the existing codebase in this workspace.
+
+
+You were instructed to use these two reference files for guidance:
+SPEC.md → functional requirements and flows (all roles, including Admin).
+USER_FLOWS.md → detailed screen-by-screen user journeys.
+Tasks:
+Fix the Task page on the Kayayo plaform. It currently has an error on the page (404 Page Not Found)
+Begin implementing the Admin Portal as described in SPEC.md and USER_FLOWS.md:
+Admin login with email/password.
+Admin dashboard with KPIs (active users, trips, revenue, issues).
+User Management: approve/suspend/remove accounts, verify IDs.
+Order Monitoring: view active orders, track delays, reassign if needed.
+Payments & Escrow: show amounts held/released, freeze suspicious payments, export reports.
+Dispute Resolution: review complaints, evidence, and issue refunds/penalties.
+Marketplace Setup: add new markets, approve seller categories.
+Ratings & Trust: monitor low-rated/fake accounts.
+Analytics: user activity, delivery times, top-selling items, busiest markets.
+Make sure Admin is a separate role with its own login and interface (not mixed with Buyer/Seller/etc).
+Keep all UI layouts aligned with the details in USER_FLOWS.md.
+Do not overwrite SPEC.md or USER_FLOWS.md — only use them as references.
+Objective: Build forward from the current MVP, ensuring each role (Buyer, Seller, Kayayo, Rider, Admin) has a working dashboard with role-specific actions and connected flows.
+
+
+According to the progress tracker below, you had completed 3 out of 11 tasks.
+
+
+In progress tasks 3 / 11
+
+Fix page error for order details
+Add admin type, update sign-in
+Create admin sign-in page
+Build admin overview with key numbers
+Manage user accounts: approve, suspend
+Watch orders, track delays, reassign
+Manage payments and held money
+Handle complaints and issue refunds
+
+Identify any relevant task(s) and include them
+
+Now, I need you to continue from where you left off till completion 11 / 11
+
+Note: This app is supposed to use a persistent database (PostgreSQL via Drizzle) and not in-memory storage (MemStorage). Please migrate any implementation done using in-memory storage (MemStorage) to a persistent database (PostgreSQL via Drizzle). Finally remove in-memory storage (MemStorage) from the app completely. We dont want it and we dont need it, pls remove it.
