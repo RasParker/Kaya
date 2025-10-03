@@ -28,6 +28,7 @@ const productSchema = z.object({
     message: "Price must be a positive number",
   }),
   description: z.string().optional(),
+  image: z.string().optional(),
   isAvailable: z.boolean().default(true),
   allowSubstitution: z.boolean().default(true),
 });
@@ -87,6 +88,7 @@ export default function SellerProducts() {
       unit: "",
       price: "",
       description: "",
+      image: "",
       isAvailable: true,
       allowSubstitution: true,
     },
@@ -101,7 +103,7 @@ export default function SellerProducts() {
         ...data,
         price: parseFloat(data.price).toFixed(2),
         sellerId,
-        image: null,
+        image: data.image || null,
       });
       return response.json();
     },
@@ -172,6 +174,7 @@ export default function SellerProducts() {
       unit: product.unit,
       price: product.price,
       description: product.description || "",
+      image: product.image || "",
       isAvailable: product.isAvailable,
       allowSubstitution: product.allowSubstitution,
     });
@@ -407,6 +410,20 @@ export default function SellerProducts() {
                     <FormLabel>Description (Optional)</FormLabel>
                     <FormControl>
                       <Input {...field} placeholder="Brief description..." data-testid="input-description" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="image"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Image URL (Optional)</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="https://example.com/image.jpg" data-testid="input-image" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
