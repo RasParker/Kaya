@@ -59,7 +59,11 @@ export default function SellerProducts() {
 
   // Get seller info
   const { data: sellers = [] } = useQuery({
-    queryKey: ["/api/sellers", { userId: user?.id }],
+    queryKey: ["/api/sellers", user?.id],
+    queryFn: async () => {
+      const response = await apiRequest("GET", `/api/sellers?userId=${user?.id}`);
+      return response.json();
+    },
     enabled: !!user,
   });
 
