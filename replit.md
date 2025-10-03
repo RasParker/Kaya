@@ -4,6 +4,16 @@ This is a marketplace application called "rest-express" designed for connecting 
 
 ## Recent Changes
 
+**2025-10-03**: Replit environment setup and configuration
+- Imported GitHub project and configured for Replit environment
+- Created and provisioned PostgreSQL database with Replit's built-in database service
+- Pushed database schema to PostgreSQL using Drizzle ORM (`npm run db:push`)
+- Seeded database with test users and sample data (run `tsx server/seed.ts`)
+- Configured workflow to run on port 5000 with webview output type
+- Updated .gitignore to exclude environment files and logs
+- Verified application runs successfully with frontend and backend working correctly
+- Application accessible at port 5000 with proper host configuration (0.0.0.0)
+
 **2025-09-30**: Completed comprehensive admin portal with full operational control
 - Built admin orders monitoring page with status filters, delay tracking, and order reassignment capabilities
 - Implemented payments & escrow management dashboard with transaction tracking, freeze functionality, and CSV export
@@ -17,6 +27,35 @@ This is a marketplace application called "rest-express" designed for connecting 
 - Database schema synchronized with missing columns added (email, is_suspended, is_active)
 - Configured workflow to run development server on port 5000 with webview output
 - Verified build and deployment configuration for production
+
+# Getting Started
+
+## Test Credentials
+
+The database has been seeded with the following test users:
+
+- **Admin**: admin@makolaconnect.com / admin123
+- **Buyer**: +233244123456 / password123  
+- **Seller**: +233244987654 / password123
+- **Kayayo**: +233244555666 / password123
+- **Rider**: +233244666777 / password123
+
+## Running the Project
+
+The application is configured to run automatically. The workflow starts the development server on port 5000.
+
+**Development server**: `npm run dev` - Runs Express server with Vite middleware for hot reloading
+**Build for production**: `npm run build` - Builds both frontend and backend
+**Start production**: `npm run start` - Runs the production build
+**Database push**: `npm run db:push` - Pushes schema changes to the database
+**Seed database**: `tsx server/seed.ts` - Seeds the database with test data
+
+## Environment Variables
+
+The following environment variables are automatically configured by Replit:
+- `DATABASE_URL` - PostgreSQL connection string
+- `SESSION_SECRET` - JWT secret for authentication
+- `PORT` - Server port (default: 5000)
 
 # User Preferences
 
