@@ -201,8 +201,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Seller routes
   app.get("/api/sellers", async (req, res) => {
     try {
-      const market = req.query.market as string || 'Makola';
-      const sellers = await storage.getSellersByMarket(market);
+      const { market, userId } = req.query;
+      
+      let sellers: any[] = [];
+      
+      if (userId) {
+        const seller = await storage.getSellerByUserId(userId as string);
+        if (seller) {
+          sellers = [seller];
+        }
+      } else {
+        const marketName = market as string || 'Makola';
+        sellers = await storage.getSellersByMarket(marketName);
+      }
       
       // Get seller user data for each seller
       const sellersWithUserData = await Promise.all(
@@ -263,7 +274,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(product);
     } catch (error) {
       console.error("Product creation error:", error);
-      res.status(400).json({ message: "Invalid product data", error: error instanceof Error ? error.message : String(error) });
+      res.status(400).json({ message: "Invalid product data" });
     }
   });
 
