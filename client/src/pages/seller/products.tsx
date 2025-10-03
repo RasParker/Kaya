@@ -87,6 +87,7 @@ export default function SellerProducts() {
       const response = await apiRequest("POST", "/api/products", {
         ...data,
         sellerId,
+        image: null,
       });
       return response.json();
     },
