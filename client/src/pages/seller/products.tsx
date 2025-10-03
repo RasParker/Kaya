@@ -71,7 +71,11 @@ export default function SellerProducts() {
   const sellerId = seller?.id;
 
   const { data: products = [], isLoading } = useQuery<Product[]>({
-    queryKey: ["/api/products", { sellerId }],
+    queryKey: ["/api/products", sellerId],
+    queryFn: async () => {
+      const response = await apiRequest("GET", `/api/products?sellerId=${sellerId}`);
+      return response.json();
+    },
     enabled: !!sellerId,
   });
 
