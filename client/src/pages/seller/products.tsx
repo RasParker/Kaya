@@ -86,8 +86,12 @@ export default function SellerProducts() {
 
   const createProductMutation = useMutation({
     mutationFn: async (data: ProductForm) => {
+      if (!sellerId) {
+        throw new Error("Seller ID is required. Please refresh the page and try again.");
+      }
       const response = await apiRequest("POST", "/api/products", {
         ...data,
+        price: parseFloat(data.price).toFixed(2),
         sellerId,
         image: null,
       });
@@ -102,10 +106,12 @@ export default function SellerProducts() {
       setIsDialogOpen(false);
       form.reset();
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error("Product creation error:", error);
+      const errorMessage = error?.message || error?.error || "Failed to add product. Please try again.";
       toast({
         title: "Error",
-        description: "Failed to add product. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     },

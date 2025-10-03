@@ -269,12 +269,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/products", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
+      console.log("Product creation request:", JSON.stringify(req.body));
       const productData = insertProductSchema.parse(req.body);
+      console.log("Parsed product data:", productData);
       const product = await storage.createProduct(productData);
+      console.log("Product created successfully:", product.id);
       res.json(product);
     } catch (error) {
       console.error("Product creation error:", error);
-      res.status(400).json({ message: "Invalid product data" });
+      if (error instanceof Error) {
+        console.error("Error message:", error.message);
+        console.error("Error stack:", error.stack);
+      }
+      res.status(400).json({ 
+        message: "Invalid product data",
+        error: error instanceof Error ? error.message : "Unknown error",
+        details: error
+      });
     }
   });
 
