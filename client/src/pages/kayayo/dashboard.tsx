@@ -125,35 +125,30 @@ export default function KayayoDashboard() {
     <MobileLayout>
       {/* Header */}
       <header className="sticky top-0 z-10 bg-card border-b border-border p-4">
-        <div className="flex items-center justify-between mb-4">
-          <div>
+        <div className="mb-4">
+          {/* Title row with toggle */}
+          <div className="flex items-center justify-between mb-1">
             <h1 className="text-xl font-bold text-primary" data-testid="kayayo-dashboard-title">
               Kayayo Dashboard
             </h1>
+            <Switch
+              checked={isAvailable}
+              onCheckedChange={(checked) => updateAvailabilityMutation.mutate(checked)}
+              disabled={updateAvailabilityMutation.isPending}
+              data-testid="switch-availability"
+            />
+          </div>
+          
+          {/* Subtitle row with status */}
+          <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">Welcome back, {user.name}</p>
+            <div className="flex items-center gap-2">
+              <div className={`w-2 h-2 rounded-full ${isAvailable ? 'bg-green-500' : 'bg-red-500'}`}></div>
+              <span className="text-xs text-muted-foreground">
+                {isAvailable ? 'Available' : 'Unavailable'}
+              </span>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <div className={`w-2 h-2 rounded-full ${isAvailable ? 'bg-green-500' : 'bg-red-500'}`}></div>
-            <span className="text-xs text-muted-foreground">
-              {isAvailable ? 'Available' : 'Unavailable'}
-            </span>
-          </div>
-        </div>
-
-        {/* Availability Toggle */}
-        <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg mb-4">
-          <div>
-            <p className="font-semibold text-sm">Available for Orders</p>
-            <p className="text-xs text-muted-foreground">
-              Turn on to receive new shopping requests
-            </p>
-          </div>
-          <Switch
-            checked={isAvailable}
-            onCheckedChange={(checked) => updateAvailabilityMutation.mutate(checked)}
-            disabled={updateAvailabilityMutation.isPending}
-            data-testid="switch-availability"
-          />
         </div>
 
         {/* Quick Stats */}
