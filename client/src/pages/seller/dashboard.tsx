@@ -26,7 +26,7 @@ import type { Product, Order } from "@shared/schema";
 
 export default function SellerDashboard() {
   const [, setLocation] = useLocation();
-  const { user } = useAuth();
+  const { user, login } = useAuth();
   const { lastMessage } = useWebSocket();
   const { toast } = useToast();
 
@@ -72,6 +72,14 @@ export default function SellerDashboard() {
       queryClient.setQueryData(["/api/users"], context?.previousUser);
     },
     onSuccess: ({ isOnline }) => {
+      // Update the user in auth context
+      if (user) {
+        const updatedUser = { ...user, isOnline };
+        const token = localStorage.getItem('auth_token');
+        if (token) {
+          login(updatedUser, token);
+        }
+      }
       toast({
         title: "Status updated",
         description: isOnline ? "You are now online" : "You are now offline",
