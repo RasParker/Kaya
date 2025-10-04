@@ -12,13 +12,18 @@ interface KayayoCardProps {
       profileImage?: string;
     };
   };
+  onClick?: () => void;
 }
 
-export default function KayayoCard({ kayayo }: KayayoCardProps) {
+export default function KayayoCard({ kayayo, onClick }: KayayoCardProps) {
   const { user, isAvailable } = kayayo;
   
   return (
-    <div className="flex-shrink-0 bg-card border border-border rounded-lg p-3 w-32" data-testid={`card-kayayo-${kayayo.id}`}>
+    <div 
+      className={`flex-shrink-0 bg-card border border-border rounded-lg p-3 w-32 ${onClick ? 'cursor-pointer hover:shadow-md transition-shadow' : ''}`}
+      onClick={onClick}
+      data-testid={`card-kayayo-${kayayo.id}`}
+    >
       {/* Profile Image */}
       <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-2 overflow-hidden">
         {user.profileImage ? (

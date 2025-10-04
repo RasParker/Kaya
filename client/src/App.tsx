@@ -11,14 +11,19 @@ import Login from "@/pages/auth/login";
 import Register from "@/pages/auth/register";
 import AdminLogin from "@/pages/auth/admin-login";
 import Browse from "@/pages/buyer/browse";
+import SellersPage from "@/pages/buyer/sellers";
+import KayayoProfile from "@/pages/buyer/kayayo-profile";
 import Cart from "@/pages/buyer/cart";
 import Payment from "@/pages/buyer/payment";
 import OrderConfirmation from "@/pages/buyer/order-confirmation";
 import Orders from "@/pages/buyer/orders";
 import Profile from "@/pages/profile";
+import AccountSettings from "@/pages/account-settings";
 import SellerDashboard from "@/pages/seller/dashboard";
 import SellerProducts from "@/pages/seller/products";
 import SellerOrders from "@/pages/seller/orders";
+import SellerWithdraw from "@/pages/seller/withdraw";
+import SellerAnalytics from "@/pages/seller/analytics";
 import KayayoDashboard from "@/pages/kayayo/dashboard";
 import KayayoTasks from "@/pages/kayayo/tasks";
 import KayayoOrderDetails from "@/pages/kayayo/order-details";
@@ -44,6 +49,16 @@ function Router() {
           <Browse />
         </ProtectedRoute>
       </Route>
+      <Route path="/sellers">
+        <ProtectedRoute allowedRoles={['buyer']}>
+          <SellersPage />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/kayayo-profile">
+        <ProtectedRoute allowedRoles={['buyer']}>
+          <KayayoProfile />
+        </ProtectedRoute>
+      </Route>
       <Route path="/cart">
         <ProtectedRoute allowedRoles={['buyer']}>
           <Cart />
@@ -65,10 +80,15 @@ function Router() {
         </ProtectedRoute>
       </Route>
       
-      {/* General authenticated route */}
+      {/* General authenticated routes */}
       <Route path="/profile">
         <ProtectedRoute>
           <Profile />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/account-settings">
+        <ProtectedRoute>
+          <AccountSettings />
         </ProtectedRoute>
       </Route>
       
@@ -86,6 +106,16 @@ function Router() {
       <Route path="/seller/orders">
         <ProtectedRoute allowedRoles={['seller']}>
           <SellerOrders />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/seller/withdraw">
+        <ProtectedRoute allowedRoles={['seller']}>
+          <SellerWithdraw />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/seller/analytics">
+        <ProtectedRoute allowedRoles={['seller']}>
+          <SellerAnalytics />
         </ProtectedRoute>
       </Route>
       

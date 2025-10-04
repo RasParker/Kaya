@@ -160,7 +160,13 @@ export default function HomePage() {
         <section className="py-4">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-lg font-semibold">Top Sellers Today</h2>
-            <Button variant="link" size="sm" className="text-primary" data-testid="button-view-all-sellers">
+            <Button 
+              variant="link" 
+              size="sm" 
+              className="text-primary" 
+              onClick={() => setLocation("/sellers")}
+              data-testid="button-view-all-sellers"
+            >
               View All
             </Button>
           </div>
@@ -187,7 +193,11 @@ export default function HomePage() {
 
           <div className="flex gap-3 overflow-x-auto pb-2">
             {Array.isArray(kayayos) ? kayayos.slice(0, 5).map((kayayo: any) => (
-              <KayayoCard key={kayayo.id} kayayo={kayayo} />
+              <KayayoCard 
+                key={kayayo.id} 
+                kayayo={kayayo} 
+                onClick={() => setLocation(`/kayayo-profile?id=${kayayo.id}`)}
+              />
             )) : null}
           </div>
         </section>

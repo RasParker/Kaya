@@ -180,10 +180,7 @@ export default function SellerDashboard() {
                 </div>
                 <Button 
                   className="bg-green-600 hover:bg-green-700"
-                  onClick={() => {
-                    // TODO: Implement withdraw functionality
-                    alert('Withdraw functionality will be available soon!');
-                  }}
+                  onClick={() => setLocation('/seller/withdraw')}
                   data-testid="button-withdraw"
                 >
                   Withdraw
@@ -231,10 +228,7 @@ export default function SellerDashboard() {
               <Button
                 variant="outline"
                 className="h-16 flex-col gap-2"
-                onClick={() => {
-                  // TODO: Navigate to analytics/insights page
-                  alert('Analytics feature coming soon!');
-                }}
+                onClick={() => setLocation('/seller/analytics')}
                 data-testid="button-analytics"
               >
                 <TrendingUp className="h-5 w-5" />

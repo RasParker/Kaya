@@ -16,15 +16,23 @@ import LoadingSpinner from "@/components/ui/loading-spinner";
 import type { Product } from "@shared/schema";
 
 export default function Browse() {
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Extract seller from URL query parameter
+  const params = new URLSearchParams(location.split('?')[1] || '');
+  const sellerId = params.get('seller');
+
   const { data: products = [], isLoading } = useQuery<Product[]>({
-    queryKey: ["/api/products", { category: selectedCategory === "all" ? undefined : selectedCategory, search: searchQuery || undefined }],
+    queryKey: ["/api/products", { 
+      category: selectedCategory === "all" ? undefined : selectedCategory, 
+      search: searchQuery || undefined,
+      seller: sellerId || undefined
+    }],
     enabled: true,
   });
 

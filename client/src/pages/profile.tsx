@@ -171,6 +171,7 @@ export default function Profile() {
             <Button
               variant="outline"
               className="w-full justify-start"
+              onClick={() => setLocation("/account-settings")}
               data-testid="button-settings"
             >
               <Settings className="h-4 w-4 mr-3" />
