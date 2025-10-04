@@ -57,9 +57,9 @@ export default function KayayoDashboard() {
       });
       return { isAvailable, data: await response.json() };
     },
-    onSuccess: ({ isAvailable }) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/kayayos", user?.id, "availability"] });
-      refetchAvailability();
+    onSuccess: async ({ isAvailable }) => {
+      await queryClient.invalidateQueries({ queryKey: ["/api/kayayos", user?.id, "availability"] });
+      await refetchAvailability();
       toast({
         title: "Availability updated",
         description: isAvailable ? "You are now available for orders" : "You are now unavailable",
