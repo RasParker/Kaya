@@ -24,7 +24,7 @@ export default function HomePage() {
   const { user, isAuthenticated } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState("Vegetables");
   const [searchQuery, setSearchQuery] = useState("");
-  
+
   // Role-based redirection for authenticated users
   if (isAuthenticated && user) {
     switch (user.userType) {
@@ -52,7 +52,7 @@ export default function HomePage() {
     setLocation("/login");
     return null;
   }
-  
+
   const { data: sellers = [] } = useQuery({
     queryKey: ["/api/sellers"],
     enabled: true,
@@ -79,7 +79,7 @@ export default function HomePage() {
   return (
     <MobileLayout>
       {/* Header */}
-      <header className="bg-card border-b border-border p-4">
+      <header className="sticky top-0 z-10 bg-card p-4 border-b border-border">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-2xl font-bold text-primary" data-testid="app-title">Makola Connect</h1>
@@ -164,7 +164,7 @@ export default function HomePage() {
               View All
             </Button>
           </div>
-          
+
           <div className="space-y-3">
             {Array.isArray(sellers) ? sellers.slice(0, 3).map((seller: any) => (
               <SellerCard 
@@ -184,7 +184,7 @@ export default function HomePage() {
               {Array.isArray(kayayos) ? kayayos.length : 0} available now
             </span>
           </div>
-          
+
           <div className="flex gap-3 overflow-x-auto pb-2">
             {Array.isArray(kayayos) ? kayayos.slice(0, 5).map((kayayo: any) => (
               <KayayoCard key={kayayo.id} kayayo={kayayo} />
@@ -196,7 +196,7 @@ export default function HomePage() {
         {recentOrders.length > 0 && (
           <section className="py-4">
             <h2 className="text-lg font-semibold mb-3">Your Recent Orders</h2>
-            
+
             <div className="space-y-3">
               {recentOrders.map((order: any) => (
                 <OrderCard 

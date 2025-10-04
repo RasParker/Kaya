@@ -159,7 +159,7 @@ export default function PaymentPage() {
   return (
     <MobileLayout>
       {/* Header */}
-      <div className="flex items-center gap-3 p-4 border-b">
+      <div className="sticky top-0 z-10 bg-card flex items-center gap-3 p-4 border-b">
         <Button
           variant="ghost"
           size="icon"
