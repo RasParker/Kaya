@@ -371,7 +371,7 @@ export default function SellerProducts() {
 
       {/* Add/Edit Product Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="w-full max-w-md mx-4">
+        <DialogContent className="w-[90vw] max-w-md">
           <DialogHeader>
             <DialogTitle>
               {editingProduct ? 'Edit Product' : 'Add New Product'}
