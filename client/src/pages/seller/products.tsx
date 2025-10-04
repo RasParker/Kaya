@@ -38,8 +38,10 @@ type ProductForm = z.infer<typeof productSchema>;
 
 const categories = [
   { value: "vegetables", label: "Vegetables" },
+  { value: "fruits", label: "Fruits" },
   { value: "roots", label: "Roots & Tubers" },
   { value: "fish", label: "Fish & Seafood" },
+  { value: "grains", label: "Grains & Cereals" },
   { value: "spices", label: "Spices" },
   { value: "household", label: "Household Items" },
 ];

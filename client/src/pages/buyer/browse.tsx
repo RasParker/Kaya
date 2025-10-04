@@ -73,8 +73,10 @@ export default function Browse() {
   const categories = [
     { id: "all", name: "All Items" },
     { id: "vegetables", name: "Vegetables" },
+    { id: "fruits", name: "Fruits" },
     { id: "roots", name: "Roots & Tubers" },
     { id: "fish", name: "Fish & Seafood" },
+    { id: "grains", name: "Grains" },
     { id: "spices", name: "Spices" },
     { id: "household", name: "Household" },
   ];
