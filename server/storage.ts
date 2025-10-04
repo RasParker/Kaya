@@ -109,6 +109,7 @@ export class PostgresStorage implements IStorage {
       fetchOptions: {
         cache: 'no-store',
       },
+      fullResults: true,
     });
     this.db = drizzle(sql, { schema });
   }
