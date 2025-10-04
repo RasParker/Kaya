@@ -238,7 +238,7 @@ export default function SellerProducts() {
   return (
     <MobileLayout>
       {/* Header */}
-      <header className="bg-card border-b border-border p-4">
+      <header className="sticky top-0 z-10 bg-card border-b border-border p-4">
         <div className="flex items-center gap-3 mb-4">
           <Button
             variant="ghost"
@@ -524,13 +524,13 @@ export default function SellerProducts() {
                 </div>
               </div>
 
-              <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="isAvailable"
                   render={({ field }) => (
-                    <FormItem className="flex items-center justify-between">
-                      <FormLabel>Available for sale</FormLabel>
+                    <FormItem className="flex flex-col gap-2">
+                      <FormLabel className="text-sm">Available for sale</FormLabel>
                       <FormControl>
                         <Switch
                           checked={field.value}
@@ -546,8 +546,8 @@ export default function SellerProducts() {
                   control={form.control}
                   name="allowSubstitution"
                   render={({ field }) => (
-                    <FormItem className="flex items-center justify-between">
-                      <FormLabel>Allow substitution</FormLabel>
+                    <FormItem className="flex flex-col gap-2">
+                      <FormLabel className="text-sm">Allow substitution</FormLabel>
                       <FormControl>
                         <Switch
                           checked={field.value}
