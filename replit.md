@@ -4,18 +4,18 @@ This is a marketplace application called "rest-express" designed for connecting 
 
 ## Recent Changes
 
+**2025-10-04**: Quick test login feature added
+- Added tabbed login interface with "Manual Login" and "Test Logins" tabs
+- Test Logins tab provides one-click authentication for all user types
+- Properly handles both email-based (admin) and phone-based (other users) authentication
+- Simplified database seeding to include only 1 test user per role (5 users total)
+
 **2025-10-04**: GitHub import successfully completed
 - Imported GitHub project and configured for Replit environment
 - Installed all Node.js dependencies via npm
 - Created and provisioned PostgreSQL database with Replit's built-in database service
 - Database schema verified and matches code schema 100%
-- Fully seeded database with complete test data:
-  - 1 admin user, 1 buyer, 3 sellers, 3 kayayo, 2 riders (10 total users)
-  - 3 seller profiles with stall information
-  - 11 products across vegetables, roots, and fish categories
-  - 3 kayayo availability records
 - Configured workflow "Start application" to run on port 5000 with webview output type
-- Fixed database connection SSL issues for development environment
 - Application running successfully with frontend accessible and backend APIs operational
 - Server configured with proper host settings (0.0.0.0) for Replit proxy compatibility
 - Deployment configuration set for autoscale production deployment
