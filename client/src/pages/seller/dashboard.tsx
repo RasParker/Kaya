@@ -1,11 +1,15 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 import { useAuth } from "@/lib/auth.tsx";
 import { useWebSocket } from "@/hooks/use-websocket";
+import { apiRequest } from "@/lib/queryClient";
 import MobileLayout from "@/components/layout/mobile-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { useToast } from "@/hooks/use-toast";
 import { 
   Package, 
   ShoppingBag, 
@@ -24,6 +28,7 @@ export default function SellerDashboard() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
   const { lastMessage } = useWebSocket();
+  const { toast } = useToast();
 
   const { data: products = [] } = useQuery<Product[]>({
     queryKey: ["/api/products", { sellerId: user?.id }],
@@ -38,6 +43,22 @@ export default function SellerDashboard() {
   const { data: pendingOrders = [] } = useQuery<Order[]>({
     queryKey: ["/api/orders/pending"],
     enabled: !!user,
+  });
+
+  const updateOnlineStatusMutation = useMutation({
+    mutationFn: async (isOnline: boolean) => {
+      const response = await apiRequest("PATCH", `/api/users/${user?.id}/online-status`, {
+        isOnline
+      });
+      return { isOnline, data: await response.json() };
+    },
+    onSuccess: ({ isOnline }) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      toast({
+        title: "Status updated",
+        description: isOnline ? "You are now online" : "You are now offline",
+      });
+    },
   });
 
   if (!user || user.userType !== 'seller') {
@@ -86,13 +107,17 @@ export default function SellerDashboard() {
       {/* Header */}
       <header className="sticky top-0 z-10 bg-card border-b border-border p-4">
         <div className="mb-2">
-          {/* Title row with online status toggle (placeholder for now) */}
+          {/* Title row with online status toggle */}
           <div className="flex items-center justify-between mb-1">
             <h1 className="text-xl font-bold text-primary" data-testid="seller-dashboard-title">
               Seller Dashboard
             </h1>
-            {/* Online status toggle placeholder - can be enhanced later */}
-            <div className={`w-10 h-5 rounded-full ${user.isOnline ? 'bg-green-500' : 'bg-gray-400'}`}></div>
+            <Switch
+              checked={user.isOnline}
+              onCheckedChange={(checked) => updateOnlineStatusMutation.mutate(checked)}
+              disabled={updateOnlineStatusMutation.isPending}
+              data-testid="switch-online-status"
+            />
           </div>
           
           {/* Subtitle row with status */}

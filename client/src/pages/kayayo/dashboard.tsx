@@ -32,7 +32,7 @@ export default function KayayoDashboard() {
   const { lastMessage } = useWebSocket();
   const { toast } = useToast();
 
-  const { data: availability } = useQuery({
+  const { data: availability, refetch: refetchAvailability } = useQuery({
     queryKey: ["/api/kayayos", user?.id, "availability"],
     queryFn: async () => {
       const response = await fetch(`/api/kayayos/availability`, {
@@ -58,7 +58,8 @@ export default function KayayoDashboard() {
       return { isAvailable, data: await response.json() };
     },
     onSuccess: ({ isAvailable }) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/kayayos"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/kayayos", user?.id, "availability"] });
+      refetchAvailability();
       toast({
         title: "Availability updated",
         description: isAvailable ? "You are now available for orders" : "You are now unavailable",
