@@ -144,6 +144,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { phone, email, password } = req.body;
       
+      console.log('Login attempt:', { phone, email, hasPassword: !!password });
+      
       // Determine login method (phone or email)
       let user;
       if (email) {
@@ -155,12 +157,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       if (!user) {
+        console.log('User not found');
         return res.status(401).json({ message: "Invalid credentials" });
       }
+
+      console.log('User found:', user.id, user.userType);
 
       // Compare provided password with hashed password
       const isPasswordValid = await bcrypt.compare(password, user.password);
       if (!isPasswordValid) {
+        console.log('Password invalid');
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
@@ -181,6 +187,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ user: { ...user, password: undefined }, token });
     } catch (error) {
+      console.error('Login error:', error);
       res.status(400).json({ message: "Login failed" });
     }
   });
