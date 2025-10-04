@@ -35,47 +35,23 @@ async function seed() {
     });
     console.log('✓ Created buyer user');
 
-    // Create seller users
-    const seller1Password = await bcrypt.hash('password123', saltRounds);
-    const seller1 = await storage.createUser({
+    // Create seller user
+    const sellerPassword = await bcrypt.hash('password123', saltRounds);
+    const seller = await storage.createUser({
       phone: '+233244987654',
-      email: 'seller1@test.com',
+      email: 'seller@test.com',
       name: 'Auntie Akosua',
       userType: 'seller',
-      password: seller1Password,
+      password: sellerPassword,
       profileImage: null,
       isVerified: true,
       isOnline: true,
     });
+    console.log('✓ Created seller user');
 
-    const seller2Password = await bcrypt.hash('password123', saltRounds);
-    const seller2 = await storage.createUser({
-      phone: '+233244777888',
-      email: 'seller2@test.com',
-      name: 'Uncle Kwame',
-      userType: 'seller',
-      password: seller2Password,
-      profileImage: null,
-      isVerified: true,
-      isOnline: true,
-    });
-
-    const seller3Password = await bcrypt.hash('password123', saltRounds);
-    const seller3 = await storage.createUser({
-      phone: '+233244999000',
-      email: 'seller3@test.com',
-      name: 'Mama Ama',
-      userType: 'seller',
-      password: seller3Password,
-      profileImage: null,
-      isVerified: true,
-      isOnline: true,
-    });
-    console.log('✓ Created 3 seller users');
-
-    // Create seller profiles
-    const sellerData1 = await storage.createSeller({
-      userId: seller1.id,
+    // Create seller profile
+    const sellerData = await storage.createSeller({
+      userId: seller.id,
       stallName: "Akosua's Fresh Vegetables",
       stallLocation: 'Section A, Row 5',
       market: 'Makola',
@@ -84,43 +60,13 @@ async function seed() {
       languages: ['English', 'Twi'],
       verificationBadge: true,
     });
+    console.log('✓ Created seller profile');
 
-    const sellerData2 = await storage.createSeller({
-      userId: seller2.id,
-      stallName: "Kwame's Roots & Tubers",
-      stallLocation: 'Section B, Row 2',
-      market: 'Makola',
-      specialties: ['Yam', 'cassava', 'plantain'],
-      openingHours: { start: '05:30', end: '17:30' },
-      languages: ['English', 'Twi', 'Ga'],
-      verificationBadge: true,
-    });
-
-    const sellerData3 = await storage.createSeller({
-      userId: seller3.id,
-      stallName: "Ama's Fish & Seafood",
-      stallLocation: 'Section C, Row 1',
-      market: 'Makola',
-      specialties: ['Fresh tilapia', 'dried fish', 'shrimp'],
-      openingHours: { start: '05:00', end: '16:00' },
-      languages: ['English', 'Ga'],
-      verificationBadge: true,
-    });
-    console.log('✓ Created 3 seller profiles');
-
-    // Create products
+    // Create sample products
     const products = [
-      { sellerId: sellerData1.id, name: 'Fresh Tomatoes', category: 'vegetables', unit: 'per basket', price: '25.00', description: 'Fresh, ripe tomatoes from local farms' },
-      { sellerId: sellerData1.id, name: 'Red Onions', category: 'vegetables', unit: 'per bag', price: '18.00', description: 'Sweet red onions, perfect for cooking' },
-      { sellerId: sellerData1.id, name: 'Hot Peppers', category: 'spices', unit: 'per cup', price: '8.00', description: 'Spicy hot peppers for your dishes' },
-      { sellerId: sellerData1.id, name: 'Garden Eggs', category: 'vegetables', unit: 'per bowl', price: '12.00', description: 'Fresh garden eggs, locally grown' },
-      { sellerId: sellerData2.id, name: 'White Yam', category: 'roots', unit: 'per tuber', price: '15.00', description: 'Quality white yam, perfect for fufu' },
-      { sellerId: sellerData2.id, name: 'Cassava', category: 'roots', unit: 'per tuber', price: '8.00', description: 'Fresh cassava for gari or cooking' },
-      { sellerId: sellerData2.id, name: 'Ripe Plantain', category: 'roots', unit: 'per bunch', price: '20.00', description: 'Sweet ripe plantain ready to cook' },
-      { sellerId: sellerData2.id, name: 'Green Plantain', category: 'roots', unit: 'per bunch', price: '18.00', description: 'Unripe plantain for kelewele or boiling' },
-      { sellerId: sellerData3.id, name: 'Fresh Tilapia', category: 'fish', unit: 'per fish', price: '22.00', description: 'Fresh tilapia from Lake Volta' },
-      { sellerId: sellerData3.id, name: 'Dried Herrings', category: 'fish', unit: 'per pack', price: '35.00', description: 'Smoked dried herrings for soup' },
-      { sellerId: sellerData3.id, name: 'Fresh Shrimp', category: 'fish', unit: 'per cup', price: '45.00', description: 'Fresh shrimp from the coast' },
+      { sellerId: sellerData.id, name: 'Fresh Tomatoes', category: 'vegetables', unit: 'per basket', price: '25.00', description: 'Fresh, ripe tomatoes from local farms' },
+      { sellerId: sellerData.id, name: 'Red Onions', category: 'vegetables', unit: 'per bag', price: '18.00', description: 'Sweet red onions, perfect for cooking' },
+      { sellerId: sellerData.id, name: 'Hot Peppers', category: 'spices', unit: 'per cup', price: '8.00', description: 'Spicy hot peppers for your dishes' },
     ];
 
     for (const product of products) {
@@ -131,119 +77,44 @@ async function seed() {
         allowSubstitution: true,
       });
     }
-    console.log('✓ Created 11 products');
+    console.log('✓ Created 3 products');
 
-    // Create kayayo users
-    const kayayos = [
-      { name: 'Adwoa', phone: '+233244555666', email: 'kayayo1@test.com' },
-      { name: 'Akosua', phone: '+233244555777', email: 'kayayo2@test.com' },
-      { name: 'Efua', phone: '+233244555888', email: 'kayayo3@test.com' },
-    ];
-
-    for (const kayayo of kayayos) {
-      const kayayoPassword = await bcrypt.hash('password123', saltRounds);
-      const kayayoUser = await storage.createUser({
-        phone: kayayo.phone,
-        email: kayayo.email,
-        name: kayayo.name,
-        userType: 'kayayo',
-        password: kayayoPassword,
-        profileImage: null,
-        isVerified: true,
-        isOnline: true,
-      });
-
-      await storage.createKayayoAvailability({
-        kayayoId: kayayoUser.id,
-        market: 'Makola',
-        isAvailable: true,
-        currentLocation: 'Market Entrance',
-        maxOrders: 3,
-        currentOrders: 0,
-      });
-    }
-    console.log('✓ Created 3 kayayo users with availability');
-
-    // Create rider users
-    const riders = [
-      { name: 'Kwaku', phone: '+233244666777', email: 'rider1@test.com' },
-      { name: 'Kofi', phone: '+233244666888', email: 'rider2@test.com' },
-    ];
-
-    for (const rider of riders) {
-      const riderPassword = await bcrypt.hash('password123', saltRounds);
-      await storage.createUser({
-        phone: rider.phone,
-        email: rider.email,
-        name: rider.name,
-        userType: 'rider',
-        password: riderPassword,
-        profileImage: null,
-        isVerified: true,
-        isOnline: true,
-      });
-    }
-    console.log('✓ Created 2 rider users');
-
-    // Create a sample order
-    const order = await storage.createOrder({
-      buyerId: buyer.id,
-      kayayoId: null,
-      riderId: null,
-      status: 'pending',
-      totalAmount: '92.00',
-      deliveryAddress: 'East Legon, Accra - Near Shell Station',
-      deliveryFee: '8.00',
-      kayayoFee: '5.00',
-      platformFee: '2.00',
-      estimatedDeliveryTime: 90,
-      paymentMethod: 'momo',
+    // Create kayayo user
+    const kayayoPassword = await bcrypt.hash('password123', saltRounds);
+    const kayayoUser = await storage.createUser({
+      phone: '+233244555666',
+      email: 'kayayo@test.com',
+      name: 'Adwoa',
+      userType: 'kayayo',
+      password: kayayoPassword,
+      profileImage: null,
+      isVerified: true,
+      isOnline: true,
     });
-    console.log('✓ Created sample order');
 
-    // Get products for order items
-    const allProducts = await storage.getProductsBySeller(sellerData1.id);
-    if (allProducts.length >= 3) {
-      await storage.createOrderItem({
-        orderId: order.id,
-        productId: allProducts[0].id,
-        sellerId: sellerData1.id,
-        quantity: 2,
-        unitPrice: allProducts[0].price,
-        subtotal: String(2 * parseFloat(allProducts[0].price)),
-        notes: null,
-        isConfirmed: false,
-        isPicked: false,
-        substitutedWith: null,
-      });
+    await storage.createKayayoAvailability({
+      kayayoId: kayayoUser.id,
+      market: 'Makola',
+      isAvailable: true,
+      currentLocation: 'Market Entrance',
+      maxOrders: 3,
+      currentOrders: 0,
+    });
+    console.log('✓ Created kayayo user with availability');
 
-      await storage.createOrderItem({
-        orderId: order.id,
-        productId: allProducts[1].id,
-        sellerId: sellerData1.id,
-        quantity: 1,
-        unitPrice: allProducts[1].price,
-        subtotal: allProducts[1].price,
-        notes: null,
-        isConfirmed: false,
-        isPicked: false,
-        substitutedWith: null,
-      });
-
-      await storage.createOrderItem({
-        orderId: order.id,
-        productId: allProducts[2].id,
-        sellerId: sellerData1.id,
-        quantity: 3,
-        unitPrice: allProducts[2].price,
-        subtotal: String(3 * parseFloat(allProducts[2].price)),
-        notes: null,
-        isConfirmed: false,
-        isPicked: false,
-        substitutedWith: null,
-      });
-      console.log('✓ Created 3 order items');
-    }
+    // Create rider user
+    const riderPassword = await bcrypt.hash('password123', saltRounds);
+    const riderUser = await storage.createUser({
+      phone: '+233244666777',
+      email: 'rider@test.com',
+      name: 'Kwaku',
+      userType: 'rider',
+      password: riderPassword,
+      profileImage: null,
+      isVerified: true,
+      isOnline: true,
+    });
+    console.log('✓ Created rider user');
 
     console.log('\n✅ Database seeding completed successfully!');
     console.log('\n📝 Test credentials:');
