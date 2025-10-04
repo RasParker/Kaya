@@ -241,34 +241,55 @@ export default function SellerProducts() {
             {products.map((product) => (
               <Card key={product.id} data-testid={`product-card-${product.id}`}>
                 <CardContent className="p-4">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1">
-                      <h3 className="font-semibold" data-testid={`product-name-${product.id}`}>
-                        {product.name}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        {product.category} • {product.unit}
-                      </p>
-                      {product.description && (
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {product.description}
-                        </p>
+                  <div className="flex items-start gap-3 mb-3">
+                    {/* Product Image */}
+                    <div className="w-20 h-20 rounded-lg bg-muted flex-shrink-0 overflow-hidden">
+                      {product.image ? (
+                        <img 
+                          src={product.image} 
+                          alt={product.name} 
+                          className="w-full h-full object-cover"
+                          data-testid={`product-image-${product.id}`}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Package className="h-8 w-8 text-muted-foreground" />
+                        </div>
                       )}
                     </div>
-                    <div className="text-right">
-                      <p className="font-bold text-primary" data-testid={`product-price-${product.id}`}>
-                        ₵{parseFloat(product.price).toFixed(2)}
-                      </p>
-                      <Badge 
-                        variant={product.isAvailable ? "default" : "secondary"}
-                        className={`text-xs ${
-                          product.isAvailable 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-red-100 text-red-800'
-                        }`}
-                      >
-                        {product.isAvailable ? 'Available' : 'Out of Stock'}
-                      </Badge>
+                    
+                    {/* Product Details */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between mb-1">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold truncate" data-testid={`product-name-${product.id}`}>
+                            {product.name}
+                          </h3>
+                          <p className="text-sm text-muted-foreground">
+                            {product.category} • {product.unit}
+                          </p>
+                          {product.description && (
+                            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                              {product.description}
+                            </p>
+                          )}
+                        </div>
+                        <div className="text-right ml-2 flex-shrink-0">
+                          <p className="font-bold text-primary" data-testid={`product-price-${product.id}`}>
+                            ₵{parseFloat(product.price).toFixed(2)}
+                          </p>
+                          <Badge 
+                            variant={product.isAvailable ? "default" : "secondary"}
+                            className={`text-xs ${
+                              product.isAvailable 
+                                ? 'bg-green-100 text-green-800' 
+                                : 'bg-red-100 text-red-800'
+                            }`}
+                          >
+                            {product.isAvailable ? 'Available' : 'Out of Stock'}
+                          </Badge>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
