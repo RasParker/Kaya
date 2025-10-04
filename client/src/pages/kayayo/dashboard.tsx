@@ -57,13 +57,31 @@ export default function KayayoDashboard() {
       });
       return { isAvailable, data: await response.json() };
     },
-    onSuccess: async ({ isAvailable }) => {
-      await queryClient.invalidateQueries({ queryKey: ["/api/kayayos", user?.id, "availability"] });
-      await refetchAvailability();
+    onMutate: async (newAvailability) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["/api/kayayos", user?.id, "availability"] });
+      
+      // Snapshot the previous value
+      const previousAvailability = queryClient.getQueryData(["/api/kayayos", user?.id, "availability"]);
+      
+      // Optimistically update to the new value
+      queryClient.setQueryData(["/api/kayayos", user?.id, "availability"], { isAvailable: newAvailability });
+      
+      return { previousAvailability };
+    },
+    onError: (err, newAvailability, context) => {
+      // Rollback on error
+      queryClient.setQueryData(["/api/kayayos", user?.id, "availability"], context?.previousAvailability);
+    },
+    onSuccess: ({ isAvailable }) => {
       toast({
         title: "Availability updated",
         description: isAvailable ? "You are now available for orders" : "You are now unavailable",
       });
+    },
+    onSettled: () => {
+      // Always refetch after error or success to ensure we're in sync
+      queryClient.invalidateQueries({ queryKey: ["/api/kayayos", user?.id, "availability"] });
     },
   });
 
