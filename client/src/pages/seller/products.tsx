@@ -29,6 +29,7 @@ const productSchema = z.object({
   }),
   description: z.string().optional(),
   image: z.string().optional(),
+  images: z.array(z.string()).optional(),
   isAvailable: z.boolean().default(true),
   allowSubstitution: z.boolean().default(true),
 });
@@ -57,6 +58,7 @@ export default function SellerProducts() {
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
 
   // Get seller info
   const { data: sellers = [] } = useQuery({
@@ -89,10 +91,45 @@ export default function SellerProducts() {
       price: "",
       description: "",
       image: "",
+      images: [],
       isAvailable: true,
       allowSubstitution: true,
     },
   });
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    const fileArray = Array.from(files).slice(0, 4 - imagePreviews.length);
+    
+    fileArray.forEach((file) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        setImagePreviews((prev) => [...prev, base64String]);
+        const currentImages = form.getValues('images') || [];
+        form.setValue('images', [...currentImages, base64String]);
+        // Set first image as main image
+        if (!form.getValues('image')) {
+          form.setValue('image', base64String);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const removeImage = (index: number) => {
+    const newPreviews = imagePreviews.filter((_, i) => i !== index);
+    setImagePreviews(newPreviews);
+    form.setValue('images', newPreviews);
+    // Update main image if we removed it
+    if (index === 0 && newPreviews.length > 0) {
+      form.setValue('image', newPreviews[0]);
+    } else if (newPreviews.length === 0) {
+      form.setValue('image', '');
+    }
+  };
 
   const createProductMutation = useMutation({
     mutationFn: async (data: ProductForm) => {
@@ -115,6 +152,7 @@ export default function SellerProducts() {
       });
       setIsDialogOpen(false);
       form.reset();
+      setImagePreviews([]);
     },
     onError: (error: any) => {
       console.error("Product creation error:", error);
@@ -141,6 +179,7 @@ export default function SellerProducts() {
       setEditingProduct(null);
       setIsDialogOpen(false);
       form.reset();
+      setImagePreviews([]);
     },
   });
 
@@ -168,6 +207,8 @@ export default function SellerProducts() {
 
   const handleEdit = (product: any) => {
     setEditingProduct(product);
+    const existingImages = product.images || (product.image ? [product.image] : []);
+    setImagePreviews(existingImages);
     form.reset({
       name: product.name,
       category: product.category,
@@ -175,6 +216,7 @@ export default function SellerProducts() {
       price: product.price,
       description: product.description || "",
       image: product.image || "",
+      images: existingImages,
       isAvailable: product.isAvailable,
       allowSubstitution: product.allowSubstitution,
     });
@@ -184,6 +226,7 @@ export default function SellerProducts() {
   const handleAdd = () => {
     setEditingProduct(null);
     form.reset();
+    setImagePreviews([]);
     setIsDialogOpen(true);
   };
 
@@ -437,19 +480,49 @@ export default function SellerProducts() {
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="image"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Image URL (Optional)</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="https://example.com/image.jpg" data-testid="input-image" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div>
+                <FormLabel>Product Images (Up to 4)</FormLabel>
+                <div className="mt-2">
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleImageSelect}
+                    disabled={imagePreviews.length >= 4}
+                    className="mb-3"
+                    data-testid="input-images"
+                  />
+                  {imagePreviews.length > 0 && (
+                    <div className="grid grid-cols-4 gap-2">
+                      {imagePreviews.map((preview, index) => (
+                        <div key={index} className="relative aspect-square rounded-lg overflow-hidden bg-muted">
+                          <img
+                            src={preview}
+                            alt={`Preview ${index + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeImage(index)}
+                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600"
+                            data-testid={`button-remove-image-${index}`}
+                          >
+                            ×
+                          </button>
+                          {index === 0 && (
+                            <div className="absolute bottom-0 left-0 right-0 bg-primary/80 text-white text-xs text-center py-0.5">
+                              Main
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {imagePreviews.length}/4 images selected
+                  </p>
+                </div>
+              </div>
 
               <div className="space-y-3">
                 <FormField
