@@ -524,13 +524,13 @@ export default function SellerProducts() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-3">
                 <FormField
                   control={form.control}
                   name="isAvailable"
                   render={({ field }) => (
-                    <FormItem className="flex flex-col gap-2">
-                      <FormLabel className="text-sm">Available for sale</FormLabel>
+                    <FormItem className="flex items-center justify-between">
+                      <FormLabel>Available for sale</FormLabel>
                       <FormControl>
                         <Switch
                           checked={field.value}
@@ -546,8 +546,8 @@ export default function SellerProducts() {
                   control={form.control}
                   name="allowSubstitution"
                   render={({ field }) => (
-                    <FormItem className="flex flex-col gap-2">
-                      <FormLabel className="text-sm">Allow substitution</FormLabel>
+                    <FormItem className="flex items-center justify-between">
+                      <FormLabel>Allow substitution</FormLabel>
                       <FormControl>
                         <Switch
                           checked={field.value}
