@@ -51,25 +51,29 @@ export default function Login() {
     },
     onSuccess: (data) => {
       login(data.user, data.token);
+      
+      // Redirect based on user type
+      const redirectPath = (() => {
+        switch (data.user.userType) {
+          case 'seller':
+            return '/seller/dashboard';
+          case 'kayayo':
+            return '/kayayo/dashboard';
+          case 'rider':
+            return '/rider/dashboard';
+          case 'admin':
+            return '/admin/dashboard';
+          default:
+            return '/';
+        }
+      })();
+      
+      setLocation(redirectPath);
+      
       toast({
         title: "Welcome back!",
         description: "You have successfully logged in.",
       });
-      
-      // Redirect based on user type
-      switch (data.user.userType) {
-        case 'seller':
-          setLocation('/seller/dashboard');
-          break;
-        case 'kayayo':
-          setLocation('/kayayo/dashboard');
-          break;
-        case 'rider':
-          setLocation('/rider/dashboard');
-          break;
-        default:
-          setLocation('/');
-      }
     },
     onError: () => {
       toast({
