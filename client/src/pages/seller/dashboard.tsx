@@ -52,12 +52,34 @@ export default function SellerDashboard() {
       });
       return { isOnline, data: await response.json() };
     },
+    onMutate: async (newOnlineStatus) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["/api/users"] });
+      
+      // Snapshot the previous value
+      const previousUser = queryClient.getQueryData(["/api/users"]);
+      
+      // Optimistically update to the new value
+      queryClient.setQueryData(["/api/users"], (old: any) => {
+        if (!old) return old;
+        return { ...old, isOnline: newOnlineStatus };
+      });
+      
+      return { previousUser };
+    },
+    onError: (err, newOnlineStatus, context) => {
+      // Rollback on error
+      queryClient.setQueryData(["/api/users"], context?.previousUser);
+    },
     onSuccess: ({ isOnline }) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
       toast({
         title: "Status updated",
         description: isOnline ? "You are now online" : "You are now offline",
       });
+    },
+    onSettled: () => {
+      // Always refetch after error or success to ensure we're in sync
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
     },
   });
 
