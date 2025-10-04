@@ -20,7 +20,7 @@ export default function KayayoProfile() {
   });
 
   const kayayo = Array.isArray(kayayos) 
-    ? kayayos.find((k: any) => k.id === kayayoId) 
+    ? kayayos.find((k: any) => k.id === kayayoId || k.kayayoId === kayayoId || k.user?.id === kayayoId) 
     : undefined;
 
   if (!kayayoId) {
