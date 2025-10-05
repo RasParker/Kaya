@@ -36,19 +36,14 @@ export default function Browse() {
     enabled: true,
   });
 
-  // Get buyer info for cart operations
-  const { data: buyers = [] } = useQuery({
-    queryKey: ["/api/buyers", { userId: user?.id }],
-    enabled: !!user?.id && user?.userType === 'buyer',
-  });
-
-  const buyer = Array.isArray(buyers) ? buyers[0] : undefined;
+  // Use the user ID directly as buyer ID since buyers are stored in the users table
+  const buyerId = user?.userType === 'buyer' ? user.id : undefined;
 
   // Add to cart mutation
   const addToCartMutation = useMutation({
     mutationFn: async ({ productId, quantity }: { productId: string; quantity: number }) => {
       const response = await apiRequest("POST", "/api/cart", {
-        buyerId: buyer?.id,
+        buyerId,
         productId,
         quantity,
       });
@@ -157,7 +152,7 @@ export default function Browse() {
                 product={product} 
                 onAddToCart={() => addToCartMutation.mutate({ productId: product.id, quantity: 1 })}
                 isAddingToCart={addToCartMutation.isPending}
-                buyerId={buyer?.id}
+                buyerId={buyerId}
               />
             ))}
           </div>
