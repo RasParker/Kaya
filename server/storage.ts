@@ -43,6 +43,7 @@ export interface IStorage {
 
   // Products
   getProduct(id: string): Promise<Product | undefined>;
+  getAllProducts(): Promise<Product[]>;
   createProduct(product: InsertProduct): Promise<Product>;
   updateProduct(id: string, product: Partial<Product>): Promise<Product | undefined>;
   deleteProduct(id: string): Promise<boolean>;
@@ -173,6 +174,10 @@ export class PostgresStorage implements IStorage {
   async getProduct(id: string): Promise<Product | undefined> {
     const result = await this.db.select().from(schema.products).where(eq(schema.products.id, id)).limit(1);
     return result[0];
+  }
+
+  async getAllProducts(): Promise<Product[]> {
+    return await this.db.select().from(schema.products);
   }
 
   async createProduct(insertProduct: InsertProduct): Promise<Product> {

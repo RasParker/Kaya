@@ -264,8 +264,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else if (sellerId) {
         products = await storage.getProductsBySeller(sellerId as string);
       } else {
-        // Get all products (you might want to implement pagination)
-        products = Array.from((storage as any).products.values());
+        products = await storage.getAllProducts();
       }
       
       res.json(products);
