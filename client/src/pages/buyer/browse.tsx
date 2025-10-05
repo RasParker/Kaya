@@ -41,7 +41,7 @@ export default function Browse() {
     queryKey: ["/api/buyers", { userId: user?.id }],
     enabled: !!user?.id && user?.userType === 'buyer',
   });
-  
+
   const buyer = Array.isArray(buyers) ? buyers[0] : undefined;
 
   // Add to cart mutation
@@ -199,7 +199,7 @@ function ProductCard({
         <h3 className="font-semibold text-sm mb-1" data-testid={`text-product-name-${product.id}`}>
           {product.name}
         </h3>
-        
+
         <p className="text-xs text-muted-foreground mb-2" data-testid={`text-product-unit-${product.id}`}>
           {product.unit}
         </p>
@@ -220,6 +220,7 @@ function ProductCard({
         </div>
 
         <Button
+          variant="default"
           size="sm"
           className="w-full text-xs h-8"
           disabled={!product.isAvailable || !buyerId || isAddingToCart}
