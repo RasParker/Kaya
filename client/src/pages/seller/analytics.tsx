@@ -83,7 +83,7 @@ export default function SellerAnalytics() {
   return (
     <MobileLayout>
       {/* Header */}
-      <header className="bg-card border-b border-border p-4">
+      <header className="sticky top-0 z-10 bg-card border-b border-border p-4">
         <div className="flex items-center gap-3">
           <Button
             variant="ghost"
