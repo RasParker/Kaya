@@ -19,6 +19,7 @@ export default function Browse() {
   const [location, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [addingProductId, setAddingProductId] = useState<string | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -42,6 +43,7 @@ export default function Browse() {
   // Add to cart mutation
   const addToCartMutation = useMutation({
     mutationFn: async ({ productId, quantity }: { productId: string; quantity: number }) => {
+      setAddingProductId(productId);
       const response = await apiRequest("POST", "/api/cart", {
         buyerId,
         productId,
@@ -55,6 +57,7 @@ export default function Browse() {
         title: "Added to cart",
         description: "Product has been added to your cart.",
       });
+      setAddingProductId(null);
     },
     onError: () => {
       toast({
@@ -62,6 +65,7 @@ export default function Browse() {
         description: "Please try again or contact support.",
         variant: "destructive",
       });
+      setAddingProductId(null);
     },
   });
 
@@ -151,7 +155,7 @@ export default function Browse() {
                 key={product.id} 
                 product={product} 
                 onAddToCart={() => addToCartMutation.mutate({ productId: product.id, quantity: 1 })}
-                isAddingToCart={addToCartMutation.isPending}
+                isAddingToCart={addingProductId === product.id}
                 buyerId={buyerId}
               />
             ))}
