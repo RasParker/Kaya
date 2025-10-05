@@ -112,18 +112,25 @@ export default function Browse() {
 
         {/* Categories */}
         <div className="flex gap-2 overflow-x-auto pb-2">
-          {categories.map((category) => (
-            <Button
-              key={category.id}
-              variant={selectedCategory === category.id ? "default" : "secondary"}
-              size="sm"
-              className="whitespace-nowrap"
-              onClick={() => setSelectedCategory(category.id)}
-              data-testid={`button-category-${category.id}`}
-            >
-              {category.name}
-            </Button>
-          ))}
+          {categories.map((category) => {
+            const isActive = selectedCategory === category.id;
+            return (
+              <Button
+                key={category.id}
+                variant={isActive ? "default" : "secondary"}
+                size="sm"
+                className={`category-chip whitespace-nowrap ${
+                  isActive 
+                    ? 'bg-primary text-primary-foreground' 
+                    : 'bg-muted text-muted-foreground hover:bg-primary hover:text-primary-foreground'
+                }`}
+                onClick={() => setSelectedCategory(category.id)}
+                data-testid={`button-category-${category.id}`}
+              >
+                {category.name}
+              </Button>
+            );
+          })}
         </div>
       </header>
 
