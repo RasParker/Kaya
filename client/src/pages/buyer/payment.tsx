@@ -159,17 +159,19 @@ export default function PaymentPage() {
   return (
     <MobileLayout>
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-card flex items-center gap-3 p-4 border-b">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setLocation("/cart")}
-          data-testid="button-back"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <h1 className="text-lg font-semibold">Choose Payment Method</h1>
-      </div>
+      <header className="sticky top-0 z-10 bg-card border-b border-border p-4">
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setLocation("/cart")}
+            data-testid="button-back"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <h1 className="text-lg font-semibold">Choose Payment Method</h1>
+        </div>
+      </header>
 
       <div className="p-4 space-y-6">
         {/* Order Summary */}
