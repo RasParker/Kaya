@@ -35,7 +35,7 @@ const authenticateToken = (req: AuthenticatedRequest, res: Response, next: any) 
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
-  
+
   // WebSocket server for real-time updates
   const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
   const clients = new Map<string, WebSocket>();
@@ -43,7 +43,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   wss.on('connection', (ws: WebSocket, req) => {
     const url = new URL(req.url!, `http://${req.headers.host}`);
     const userId = url.searchParams.get('userId');
-    
+
     if (userId) {
       clients.set(userId, ws);
     }
@@ -67,7 +67,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/register", async (req, res) => {
     try {
       const userData = insertUserSchema.parse(req.body);
-      
+
       // SECURITY: Prevent public admin creation
       if (userData.userType === 'admin') {
         return res.status(403).json({ message: "Admin accounts cannot be created through public registration" });
@@ -77,7 +77,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!userData.phone && !userData.email) {
         return res.status(400).json({ message: "Either phone or email is required" });
       }
-      
+
       // Check if user already exists by phone
       if (userData.phone) {
         const existingUser = await storage.getUserByPhone(userData.phone);
@@ -100,7 +100,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userDataWithHashedPassword = { ...userData, password: hashedPassword };
 
       const user = await storage.createUser(userDataWithHashedPassword);
-      
+
       // Create seller profile if user type is seller
       if (user.userType === 'seller' && req.body.sellerData) {
         await storage.createSeller({
@@ -143,9 +143,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/login", async (req, res) => {
     try {
       const { phone, email, password } = req.body;
-      
+
       console.log('Login attempt:', { phone, email, hasPassword: !!password });
-      
+
       // Determine login method (phone or email)
       let user;
       if (email) {
@@ -208,23 +208,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/users/:id", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.params.id;
-      
+
       // Ensure user can only update their own profile
       if (req.user!.userId !== userId && req.user!.userType !== 'admin') {
         return res.status(403).json({ message: "Unauthorized" });
       }
-      
+
       const { name, phone, email } = req.body;
       const updateData: any = {};
       if (name !== undefined) updateData.name = name;
       if (phone !== undefined) updateData.phone = phone;
       if (email !== undefined) updateData.email = email;
-      
+
       const updatedUser = await storage.updateUser(userId, updateData);
       if (!updatedUser) {
         return res.status(404).json({ message: "User not found" });
       }
-      
+
       res.json({ ...updatedUser, password: undefined });
     } catch (error) {
       console.error('Update user error:', error);
@@ -235,19 +235,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/users/:id/online-status", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.params.id;
-      
+
       // Ensure user can only update their own status
       if (req.user!.userId !== userId) {
         return res.status(403).json({ message: "Unauthorized" });
       }
-      
+
       const { isOnline } = req.body;
-      
+
       const updatedUser = await storage.updateUser(userId, { isOnline });
       if (!updatedUser) {
         return res.status(404).json({ message: "User not found" });
       }
-      
+
       res.json({ ...updatedUser, password: undefined });
     } catch (error) {
       console.error('Update online status error:', error);
@@ -259,9 +259,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/sellers", async (req, res) => {
     try {
       const { market, userId } = req.query;
-      
+
       let sellers: any[] = [];
-      
+
       if (userId) {
         const seller = await storage.getSellerByUserId(userId as string);
         if (seller) {
@@ -271,7 +271,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const marketName = market as string || 'Makola';
         sellers = await storage.getSellersByMarket(marketName);
       }
-      
+
       // Get seller user data for each seller
       const sellersWithUserData = await Promise.all(
         sellers.map(async (seller) => {
@@ -279,7 +279,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return { ...seller, user };
         })
       );
-      
+
       res.json(sellersWithUserData);
     } catch (error) {
       res.status(500).json({ message: "Server error" });
@@ -292,7 +292,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!seller) {
         return res.status(404).json({ message: "Seller not found" });
       }
-      
+
       const user = await storage.getUser(seller.userId);
       res.json({ ...seller, user });
     } catch (error) {
@@ -302,25 +302,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Product routes
   app.get("/api/products", async (req, res) => {
-    try {
-      const { category, sellerId, search } = req.query;
-      
-      let products = [];
-      
-      if (search) {
-        products = await storage.searchProducts(search as string);
-      } else if (category) {
-        products = await storage.getProductsByCategory(category as string);
-      } else if (sellerId) {
-        products = await storage.getProductsBySeller(sellerId as string);
-      } else {
-        products = await storage.getAllProducts();
-      }
-      
-      res.json(products);
-    } catch (error) {
-      res.status(500).json({ message: "Server error" });
+    const { sellerId, category, search } = req.query;
+
+    let query = storage.db.select().from(storage.products);
+
+    const conditions = [];
+    if (sellerId) {
+      conditions.push(storage.eq(storage.products.sellerId, sellerId as string));
     }
+    if (category) {
+      conditions.push(storage.eq(storage.products.category, category as string));
+    }
+    if (search) {
+      conditions.push(storage.like(storage.products.name, `%${search}%`));
+    }
+
+    if (conditions.length > 0) {
+      query = query.where(storage.and(...conditions)) as any;
+    }
+
+    const result = await query;
+    // Ensure images field is properly returned as an array
+    const productsWithImages = result.map(product => ({
+      ...product,
+      images: product.images || []
+    }));
+    res.json(productsWithImages);
   });
 
   app.post("/api/products", authenticateToken, async (req: AuthenticatedRequest, res) => {
@@ -373,7 +380,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/cart", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
       const cartItems = await storage.getCartItems(req.user!.userId);
-      
+
       // Get product details for each cart item
       const cartWithProducts = await Promise.all(
         cartItems.map(async (item) => {
@@ -381,7 +388,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return { ...item, product };
         })
       );
-      
+
       res.json(cartWithProducts);
     } catch (error) {
       res.status(500).json({ message: "Server error" });
@@ -394,7 +401,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...req.body,
         buyerId: req.user!.userId
       });
-      
+
       const cartItem = await storage.addToCart(cartItemData);
       res.json(cartItem);
     } catch (error) {
@@ -431,9 +438,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userType = req.user!.userType;
       const userId = req.user!.userId;
-      
+
       let orders: any[] = [];
-      
+
       switch (userType) {
         case 'buyer':
           orders = await storage.getOrdersByBuyer(userId);
@@ -450,7 +457,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         default:
           orders = [];
       }
-      
+
       res.json(orders);
     } catch (error) {
       res.status(500).json({ message: "Server error" });
@@ -464,11 +471,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get cart items to calculate total amount
       const cartItems = await storage.getCartItems(req.user!.userId);
       console.log("Cart items found:", cartItems.length);
-      
+
       if (cartItems.length === 0) {
         return res.status(400).json({ message: "Cart is empty" });
       }
-      
+
       // Calculate total amount from cart items
       let totalAmount = 0;
       for (const cartItem of cartItems) {
@@ -482,15 +489,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       console.log(`Total amount calculated: ${totalAmount}`);
-      
+
       const orderData = insertOrderSchema.parse({
         ...req.body,
         buyerId: req.user!.userId,
         totalAmount: totalAmount.toString()
       });
-      
+
       const order = await storage.createOrder(orderData);
-      
+
       // Create order items from cart
       for (const cartItem of cartItems) {
         const product = await storage.getProduct(cartItem.productId);
@@ -509,16 +516,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         }
       }
-      
+
       // Clear cart after order creation
       await storage.clearCart(req.user!.userId);
-      
+
       // Broadcast order update to relevant users
       broadcastToUser(order.buyerId, {
         type: 'ORDER_CREATED',
         order
       });
-      
+
       res.json(order);
     } catch (error) {
       console.error("Order creation error:", error);
@@ -548,7 +555,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/orders/:id", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
       const order = await storage.getOrder(req.params.id);
-      
+
       if (!order) {
         return res.status(404).json({ message: "Order not found" });
       }
@@ -556,9 +563,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Verify user has access to this order
       const userType = req.user!.userType;
       const userId = req.user!.userId;
-      
+
       let hasAccess = false;
-      
+
       if (userType === 'buyer' && order.buyerId === userId) {
         hasAccess = true;
       } else if (userType === 'kayayo' && order.kayayoId === userId) {
@@ -618,7 +625,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Define allowed updates for buyers
       const allowedFields = ['deliveryAddress', 'deliveryInstructions'];
       const requestedFields = Object.keys(req.body);
-      
+
       // Check if buyer is requesting unauthorized updates
       const unauthorizedFields = requestedFields.filter(field => !allowedFields.includes(field));
       if (unauthorizedFields.length > 0) {
@@ -641,20 +648,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!order) {
         return res.status(404).json({ message: "Order not found" });
       }
-      
+
       // Broadcast order update
       broadcastToUser(order.buyerId, {
         type: 'ORDER_UPDATED',
         order
       });
-      
+
       if (order.kayayoId) {
         broadcastToUser(order.kayayoId, {
           type: 'ORDER_UPDATED',
           order
         });
       }
-      
+
       res.json(order);
     } catch (error) {
       res.status(500).json({ message: "Server error" });
@@ -707,7 +714,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/orders/:orderId/items", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
       const orderItems = await storage.getOrderItemsByOrder(req.params.orderId);
-      
+
       // Get product details for each order item
       const orderItemsWithProducts = await Promise.all(
         orderItems.map(async (item) => {
@@ -715,7 +722,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return { ...item, product };
         })
       );
-      
+
       res.json(orderItemsWithProducts);
     } catch (error) {
       res.status(500).json({ message: "Server error" });
@@ -745,15 +752,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updatedOrderItem = await storage.updateOrderItem(req.params.itemId, {
         isConfirmed: true
       });
-      
+
       if (!updatedOrderItem) {
         return res.status(404).json({ message: "Order item not found" });
       }
-      
+
       // Check if all items in the order are confirmed
       const allOrderItems = await storage.getOrderItemsByOrder(req.params.orderId);
       const allConfirmed = allOrderItems.every(item => item.isConfirmed || item.id === updatedOrderItem.id);
-      
+
       if (allConfirmed) {
         // Get the current order to validate transition
         const currentOrder = await storage.getOrder(req.params.orderId);
@@ -775,7 +782,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             status: OrderStatus.SELLER_CONFIRMED,
             confirmedAt: new Date()
           });
-          
+
           if (order) {
             broadcastToUser(order.buyerId, {
               type: 'ORDER_SELLER_CONFIRMED',
@@ -792,7 +799,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           throw error;
         }
       }
-      
+
       res.json(updatedOrderItem);
     } catch (error) {
       res.status(500).json({ message: "Server error" });
@@ -811,7 +818,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const orders = Array.from((storage as any).orders.values()).filter((order: any) => 
         order.status === OrderStatus.SELLER_CONFIRMED && !order.kayayoId
       );
-      
+
       res.json(orders);
     } catch (error) {
       res.status(500).json({ message: "Server error" });
@@ -830,7 +837,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const orders = Array.from((storage as any).orders.values()).filter((order: any) => 
         order.status === OrderStatus.READY_FOR_PICKUP && !order.riderId
       );
-      
+
       res.json(orders);
     } catch (error) {
       res.status(500).json({ message: "Server error" });
@@ -865,17 +872,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           status: OrderStatus.KAYAYO_ACCEPTED,
           kayayoId: req.user!.userId
         });
-        
+
         if (!updatedOrder) {
           return res.status(404).json({ message: "Order not found" });
         }
-        
+
         // Broadcast to buyer
         broadcastToUser(updatedOrder.buyerId, {
           type: 'ORDER_KAYAYO_ACCEPTED',
           order: updatedOrder
         });
-        
+
         res.json(updatedOrder);
       } catch (error) {
         if (error instanceof OrderStateError) {
@@ -918,17 +925,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const updatedOrder = await storage.updateOrder(req.params.orderId, {
           status: OrderStatus.SHOPPING
         });
-        
+
         if (!updatedOrder) {
           return res.status(404).json({ message: "Order not found" });
         }
-        
+
         // Broadcast to buyer
         broadcastToUser(updatedOrder.buyerId, {
           type: 'ORDER_SHOPPING_STARTED',
           order: updatedOrder
         });
-        
+
         res.json(updatedOrder);
       } catch (error) {
         if (error instanceof OrderStateError) {
@@ -985,24 +992,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: OrderStatus.IN_TRANSIT,
         riderId: req.user!.userId
       });
-      
+
       if (!updatedOrder) {
         return res.status(404).json({ message: "Order not found" });
       }
-      
+
       // Broadcast to buyer and kayayo
       broadcastToUser(updatedOrder.buyerId, {
         type: 'ORDER_IN_TRANSIT',
         order: updatedOrder
       });
-      
+
       if (updatedOrder.kayayoId) {
         broadcastToUser(updatedOrder.kayayoId, {
           type: 'ORDER_IN_TRANSIT',
           order: updatedOrder
         });
       }
-      
+
       res.json(updatedOrder);
     } catch (error) {
       res.status(500).json({ message: "Server error" });
@@ -1045,24 +1052,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: OrderStatus.DELIVERED,
         deliveredAt: new Date()
       });
-      
+
       if (!updatedOrder) {
         return res.status(404).json({ message: "Order not found" });
       }
-      
+
       // Broadcast to buyer and kayayo
       broadcastToUser(updatedOrder.buyerId, {
         type: 'ORDER_DELIVERED',
         order: updatedOrder
       });
-      
+
       if (updatedOrder.kayayoId) {
         broadcastToUser(updatedOrder.kayayoId, {
           type: 'ORDER_DELIVERED',
           order: updatedOrder
         });
       }
-      
+
       res.json(updatedOrder);
     } catch (error) {
       res.status(500).json({ message: "Server error" });
@@ -1104,23 +1111,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updatedOrder = await storage.updateOrder(req.params.orderId, {
         status: OrderStatus.READY_FOR_PICKUP
       });
-      
+
       if (!updatedOrder) {
         return res.status(404).json({ message: "Order not found" });
       }
-      
+
       // Mark all order items as picked
       const orderItems = await storage.getOrderItemsByOrder(req.params.orderId);
       await Promise.all(orderItems.map(item => 
         storage.updateOrderItem(item.id, { isPicked: true })
       ));
-      
+
       // Broadcast to buyer and available riders
       broadcastToUser(updatedOrder.buyerId, {
         type: 'ORDER_READY_FOR_PICKUP',
         order: updatedOrder
       });
-      
+
       res.json(updatedOrder);
     } catch (error) {
       res.status(500).json({ message: "Server error" });
@@ -1159,7 +1166,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const market = req.query.market as string || 'Makola';
       const availableKayayos = await storage.getAvailableKayayos(market);
-      
+
       // Get user data for each kayayo
       const kayayosWithUserData = await Promise.all(
         availableKayayos.map(async (availability) => {
@@ -1167,7 +1174,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return { ...availability, user };
         })
       );
-      
+
       res.json(kayayosWithUserData);
     } catch (error) {
       res.status(500).json({ message: "Server error" });
@@ -1202,7 +1209,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...req.body,
         reviewerId: req.user!.userId
       };
-      
+
       const review = await storage.createReview(reviewData);
       res.json(review);
     } catch (error) {
@@ -1228,7 +1235,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Filter out inactive (soft-deleted) users
       const allUsers = [...buyers, ...sellers, ...kayayos, ...riders, ...admins]
         .filter(user => user.isActive !== false);
-      
+
       res.json(allUsers);
     } catch (error) {
       console.error('Get users error:', error);
@@ -1265,7 +1272,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { suspend } = req.body;
-      
+
       // Suspend means setting isSuspended flag, verification status stays intact
       const user = await storage.updateUser(req.params.id, { isSuspended: suspend });
       if (!user) {
@@ -1325,7 +1332,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get all orders
       const allOrders = await storage.getAllOrders();
-      
+
       // Calculate order stats
       const pendingOrders = allOrders.filter(o => o.status === 'pending');
       const activeOrders = allOrders.filter(o => 
@@ -1336,11 +1343,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Calculate revenue from platform fees
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      
+
       const thisWeekStart = new Date();
       thisWeekStart.setDate(today.getDate() - 7);
       thisWeekStart.setHours(0, 0, 0, 0);
-      
+
       const thisMonthStart = new Date();
       thisMonthStart.setDate(1);
       thisMonthStart.setHours(0, 0, 0, 0);
@@ -1360,7 +1367,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get issues - unverified users and pending disputes
       const unverifiedUsers = buyers.concat(sellers, kayayos, riders)
         .filter(u => u.isVerified === false).length;
-      
+
       const allDisputes = await storage.getAllDisputes();
       const pendingDisputes = allDisputes.filter(d => d.status === 'pending' || d.status === 'under_review');
 
@@ -1405,14 +1412,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const allOrders = await storage.getAllOrders();
-      
+
       // Enrich orders with user details
       const ordersWithDetails = await Promise.all(allOrders.map(async (order) => {
         const buyer = await storage.getUser(order.buyerId);
         const kayayo = order.kayayoId ? await storage.getUser(order.kayayoId) : null;
         const rider = order.riderId ? await storage.getUser(order.riderId) : null;
         const orderItems = await storage.getOrderItemsByOrder(order.id);
-        
+
         // Check if order is delayed (more than 2 hours since creation)
         const createdTime = new Date(order.createdAt!).getTime();
         const now = new Date().getTime();
@@ -1444,7 +1451,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { type } = req.body; // "kayayo" or "rider"
       const order = await storage.getOrder(req.params.id);
-      
+
       if (!order) {
         return res.status(404).json({ message: "Order not found" });
       }
@@ -1471,7 +1478,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const allOrders = await storage.getAllOrders();
-      
+
       // Calculate payment stats
       const held = allOrders
         .filter(o => ['pending', 'seller_confirmed', 'kayayo_accepted', 'shopping', 'ready_for_pickup', 'in_transit'].includes(o.status))
@@ -1491,10 +1498,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      
+
       const thisWeekStart = new Date();
       thisWeekStart.setDate(today.getDate() - 7);
-      
+
       const thisMonthStart = new Date();
       thisMonthStart.setDate(1);
 
@@ -1532,10 +1539,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const allOrders = await storage.getAllOrders();
-      
+
       const transactions = await Promise.all(allOrders.map(async (order) => {
         const buyer = await storage.getUser(order.buyerId);
-        
+
         let status: "held" | "released" | "pending" | "frozen" = "pending";
         if (order.status === 'delivered') {
           status = "released";
@@ -1587,7 +1594,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const period = req.query.period as string;
       const allOrders = await storage.getAllOrders();
-      
+
       let filteredOrders = allOrders;
       if (period === 'week') {
         const weekAgo = new Date();
@@ -1624,7 +1631,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const allDisputes = await storage.getAllDisputes();
-      
+
       const disputesWithDetails = await Promise.all(allDisputes.map(async (dispute) => {
         const reporter = await storage.getUser(dispute.reportedBy);
         const reportedAgainst = dispute.reportedAgainst ? await storage.getUser(dispute.reportedAgainst) : null;
@@ -1652,7 +1659,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { status, resolution, refundAmount, penaltyAmount } = req.body;
-      
+
       await storage.updateDispute(req.params.id, {
         status,
         resolution,
