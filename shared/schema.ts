@@ -42,6 +42,7 @@ export const products = pgTable("products", {
   category: text("category").notNull(),
   unit: text("unit").notNull(), // 'per tuber', 'per basket', 'per kg'
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  stockQty: integer("stock_qty").default(0),
   image: text("image"),
   images: text("images").array(),
   isAvailable: boolean("is_available").default(true),

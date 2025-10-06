@@ -27,6 +27,9 @@ const productSchema = z.object({
   price: z.string().min(1, "Price is required").refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0, {
     message: "Price must be a positive number",
   }),
+  stockQty: z.string().min(1, "Stock quantity is required").refine((val) => !isNaN(parseInt(val)) && parseInt(val) >= 0, {
+    message: "Stock quantity must be a non-negative number",
+  }),
   description: z.string().optional(),
   image: z.string().optional(),
   images: z.array(z.string()).optional(),
@@ -91,6 +94,7 @@ export default function SellerProducts() {
       category: "",
       unit: "",
       price: "",
+      stockQty: "",
       description: "",
       image: "",
       images: [],
@@ -141,6 +145,7 @@ export default function SellerProducts() {
       const response = await apiRequest("POST", "/api/products", {
         ...data,
         price: parseFloat(data.price).toFixed(2),
+        stockQty: parseInt(data.stockQty),
         sellerId,
         image: data.image || null,
       });
@@ -216,6 +221,7 @@ export default function SellerProducts() {
       category: product.category,
       unit: product.unit,
       price: product.price,
+      stockQty: product.stockQty?.toString() || "0",
       description: product.description || "",
       image: product.image || "",
       images: existingImages,
@@ -312,6 +318,9 @@ export default function SellerProducts() {
                           </h3>
                           <p className="text-sm text-muted-foreground">
                             {product.category} • {product.unit}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1" data-testid={`product-stock-${product.id}`}>
+                            Stock: {product.stockQty ?? 0} {product.unit}
                           </p>
                           {product.description && (
                             <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
@@ -467,6 +476,27 @@ export default function SellerProducts() {
                   )}
                 />
               </div>
+
+              <FormField
+                control={form.control}
+                name="stockQty"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Stock Quantity</FormLabel>
+                    <FormControl>
+                      <Input 
+                        {...field} 
+                        type="number" 
+                        min="0"
+                        step="1" 
+                        placeholder="0" 
+                        data-testid="input-stock-qty"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <FormField
                 control={form.control}

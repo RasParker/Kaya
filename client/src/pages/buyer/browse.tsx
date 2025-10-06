@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation, useSearch } from "wouter";
 import MobileLayout from "@/components/layout/mobile-layout";
@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Search, Filter, Plus, ArrowLeft, X } from "lucide-react";
+import { Search, Filter, Plus, ArrowLeft, X, Minus } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
@@ -65,6 +65,14 @@ export default function Browse() {
   const [addingProductId, setAddingProductId] = useState<string | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [quantity, setQuantity] = useState(1);
+
+  // Reset quantity when modal opens with a new product
+  useEffect(() => {
+    if (selectedProduct) {
+      setQuantity(1);
+    }
+  }, [selectedProduct]);
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -85,6 +93,17 @@ export default function Browse() {
 
   // Use the user ID directly as buyer ID since buyers are stored in the users table
   const buyerId = user?.userType === 'buyer' ? user.id : undefined;
+
+  // Fetch seller info when product is selected
+  const { data: sellerInfo } = useQuery({
+    queryKey: ["/api/sellers", selectedProduct?.sellerId],
+    queryFn: async () => {
+      if (!selectedProduct?.sellerId) return null;
+      const response = await fetch(`/api/sellers/${selectedProduct.sellerId}`);
+      return response.json();
+    },
+    enabled: !!selectedProduct?.sellerId,
+  });
 
   // Add to cart mutation
   const addToCartMutation = useMutation({
@@ -234,6 +253,20 @@ export default function Browse() {
 
                 {/* Product Details */}
                 <div className="space-y-2">
+                  {sellerInfo && (
+                    <div className="p-3 bg-muted rounded-lg mb-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">Seller</span>
+                        <span className="text-sm font-semibold" data-testid="modal-seller-name">
+                          {sellerInfo.stallName}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1" data-testid="modal-seller-location">
+                        {sellerInfo.stallLocation}, {sellerInfo.market}
+                      </p>
+                    </div>
+                  )}
+
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Price</span>
                     <span className="font-bold text-xl text-primary">
@@ -244,6 +277,13 @@ export default function Browse() {
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Unit</span>
                     <span className="text-sm font-medium">{selectedProduct.unit}</span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Stock Available</span>
+                    <span className="text-sm font-medium" data-testid="modal-stock-qty">
+                      {selectedProduct.stockQty ?? 0} {selectedProduct.unit}
+                    </span>
                   </div>
 
                   <div className="flex items-center justify-between">
@@ -273,12 +313,55 @@ export default function Browse() {
                   )}
                 </div>
 
+                {/* Quantity Selector */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Quantity</label>
+                  <div className="flex items-center gap-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                      disabled={quantity <= 1}
+                      data-testid="button-decrease-qty"
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
+                    <Input
+                      type="number"
+                      min="1"
+                      max={selectedProduct.stockQty ?? 0}
+                      value={quantity}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value) || 1;
+                        const maxStock = selectedProduct.stockQty ?? 0;
+                        setQuantity(Math.min(Math.max(1, val), maxStock));
+                      }}
+                      className="text-center w-20"
+                      data-testid="input-quantity"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setQuantity(Math.min((selectedProduct.stockQty ?? 0), quantity + 1))}
+                      disabled={quantity >= (selectedProduct.stockQty ?? 0)}
+                      data-testid="button-increase-qty"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  {quantity >= (selectedProduct.stockQty ?? 0) && (selectedProduct.stockQty ?? 0) > 0 && (
+                    <p className="text-xs text-amber-600">Maximum stock reached</p>
+                  )}
+                </div>
+
                 {/* Add to Cart Button */}
                 <Button
                   className="w-full"
-                  disabled={!selectedProduct.isAvailable || !buyerId || addingProductId === selectedProduct.id}
+                  disabled={!selectedProduct.isAvailable || !buyerId || addingProductId === selectedProduct.id || (selectedProduct.stockQty ?? 0) < 1}
                   onClick={() => {
-                    addToCartMutation.mutate({ productId: selectedProduct.id, quantity: 1 });
+                    addToCartMutation.mutate({ productId: selectedProduct.id, quantity });
                     setIsModalOpen(false);
                   }}
                   data-testid="modal-add-to-cart"
@@ -339,8 +422,12 @@ function ProductCard({
           {product.name}
         </h3>
 
-        <p className="text-xs text-muted-foreground mb-2" data-testid={`text-product-unit-${product.id}`}>
+        <p className="text-xs text-muted-foreground mb-1" data-testid={`text-product-unit-${product.id}`}>
           {product.unit}
+        </p>
+
+        <p className="text-xs text-muted-foreground mb-2" data-testid={`text-product-stock-${product.id}`}>
+          Stock: {product.stockQty ?? 0}
         </p>
 
         <div className="flex items-center justify-between mb-3">
