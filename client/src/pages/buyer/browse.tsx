@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import React, { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation, useSearch } from "wouter";
 import MobileLayout from "@/components/layout/mobile-layout";
 import { Button } from "@/components/ui/button";
@@ -8,13 +8,54 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Search, Filter, Plus, ArrowLeft, X } from "lucide-react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
 import { apiRequest } from "@/lib/queryClient";
 import { SkeletonProductCard } from "@/components/ui/skeleton";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import type { Product } from "@shared/schema";
+
+// Carousel component for displaying multiple product images
+const ImageCarousel = ({ images, productName }: { images: string[]; productName: string }) => {
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  if (!images || images.length === 0) {
+    return (
+      <div className="aspect-square bg-muted rounded-lg flex items-center justify-center">
+        <span className="text-8xl">🥬</span>
+      </div>
+    );
+  }
+
+  const totalImages = images.length;
+  const maxImagesToShow = 4; // As per requirement, max 4 images
+
+  return (
+    <div className="relative aspect-square bg-muted rounded-lg overflow-hidden">
+      <img
+        src={images[currentImageIndex]}
+        alt={`${productName} - Image ${currentImageIndex + 1}`}
+        className="w-full h-full object-cover"
+        data-testid="modal-product-image"
+      />
+      {totalImages > 1 && (
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2">
+          {images.slice(0, maxImagesToShow).map((_, index) => (
+            <button
+              key={index}
+              className={`w-2.5 h-2.5 rounded-full transition-colors ${
+                index === currentImageIndex ? "bg-primary" : "bg-gray-400"
+              }`}
+              onClick={() => setCurrentImageIndex(index)}
+              aria-label={`Go to image ${index + 1}`}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 export default function Browse() {
   const [location, setLocation] = useLocation();
@@ -180,21 +221,13 @@ export default function Browse() {
                 <DialogTitle>{selectedProduct.name}</DialogTitle>
                 <DialogDescription>{selectedProduct.description || "No description available"}</DialogDescription>
               </DialogHeader>
-              
+
               <div className="space-y-4">
-                {/* Product Image */}
-                <div className="aspect-square bg-muted rounded-lg flex items-center justify-center overflow-hidden">
-                  {selectedProduct.image ? (
-                    <img
-                      src={selectedProduct.image}
-                      alt={selectedProduct.name}
-                      className="w-full h-full object-cover"
-                      data-testid="modal-product-image"
-                    />
-                  ) : (
-                    <span className="text-8xl">🥬</span>
-                  )}
-                </div>
+                {/* Product Image Carousel */}
+                <ImageCarousel 
+                  images={selectedProduct.images || [selectedProduct.image].filter(Boolean) as string[]} 
+                  productName={selectedProduct.name} 
+                />
 
                 {/* Product Details */}
                 <div className="space-y-2">
@@ -204,17 +237,17 @@ export default function Browse() {
                       ₵{parseFloat(selectedProduct.price).toFixed(2)}
                     </span>
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Unit</span>
                     <span className="text-sm font-medium">{selectedProduct.unit}</span>
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Category</span>
                     <Badge variant="secondary">{selectedProduct.category}</Badge>
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Availability</span>
                     {selectedProduct.isAvailable ? (
