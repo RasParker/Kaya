@@ -86,6 +86,11 @@ function Router() {
           <Orders />
         </ProtectedRoute>
       </Route>
+      <Route path="/buyer/orders">
+        <ProtectedRoute allowedRoles={['buyer']}>
+          <Orders />
+        </ProtectedRoute>
+      </Route>
       
       {/* General authenticated routes */}
       <Route path="/profile">
