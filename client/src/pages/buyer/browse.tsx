@@ -26,7 +26,7 @@ export default function Browse() {
 
   // Extract seller from URL query parameter
   const params = new URLSearchParams(location.split('?')[1] || '');
-  const sellerId = params.get('seller');
+  const sellerId = params.get('sellerId');
 
   const { data: products = [], isLoading } = useQuery<Product[]>({
     queryKey: ["/api/products", { 
