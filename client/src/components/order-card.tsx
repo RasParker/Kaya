@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { CheckCircle, Truck, ShoppingBag, Clock, Package, User, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -5,6 +6,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import { apiRequest } from "@/lib/queryClient";
+import ReviewDialog from "@/components/review-dialog";
+import DisputeDialog from "@/components/dispute-dialog";
 
 import type { Order } from "@shared/schema";
 
@@ -17,6 +20,8 @@ interface OrderCardProps {
 export default function OrderCard({ order, onTrack, onReorder }: OrderCardProps) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
+  const [disputeDialogOpen, setDisputeDialogOpen] = useState(false);
 
   // Confirm delivery mutation
   const confirmDeliveryMutation = useMutation({
@@ -193,21 +198,16 @@ export default function OrderCard({ order, onTrack, onReorder }: OrderCardProps)
                 variant="outline" 
                 size="sm" 
                 className="text-xs"
-                onClick={onReorder}
-                data-testid={`button-reorder-${order.id}`}
+                onClick={() => setDisputeDialogOpen(true)}
+                data-testid={`button-report-issue-${order.id}`}
               >
-                Reorder
+                Report Issue
               </Button>
               <Button 
                 variant="default" 
                 size="sm" 
                 className="text-xs"
-                onClick={() => {
-                  toast({
-                    title: "Ratings feature coming soon!",
-                    description: "Order rating functionality will be available soon.",
-                  });
-                }}
+                onClick={() => setReviewDialogOpen(true)}
                 data-testid={`button-rate-${order.id}`}
               >
                 Rate Order
@@ -314,6 +314,18 @@ export default function OrderCard({ order, onTrack, onReorder }: OrderCardProps)
           )}
         </div>
       </div>
+
+      <ReviewDialog
+        open={reviewDialogOpen}
+        onClose={() => setReviewDialogOpen(false)}
+        order={order}
+      />
+
+      <DisputeDialog
+        open={disputeDialogOpen}
+        onClose={() => setDisputeDialogOpen(false)}
+        order={order}
+      />
     </div>
   );
 }
