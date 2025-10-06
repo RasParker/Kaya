@@ -205,6 +205,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch("/api/users/:id", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.params.id;
+      
+      // Ensure user can only update their own profile
+      if (req.user!.userId !== userId && req.user!.userType !== 'admin') {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+      
+      const { name, phone, email } = req.body;
+      const updateData: any = {};
+      if (name !== undefined) updateData.name = name;
+      if (phone !== undefined) updateData.phone = phone;
+      if (email !== undefined) updateData.email = email;
+      
+      const updatedUser = await storage.updateUser(userId, updateData);
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      res.json({ ...updatedUser, password: undefined });
+    } catch (error) {
+      console.error('Update user error:', error);
+      res.status(500).json({ message: "Failed to update user" });
+    }
+  });
+
+  app.patch("/api/users/:id/online-status", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.params.id;
+      
+      // Ensure user can only update their own status
+      if (req.user!.userId !== userId) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+      
+      const { isOnline } = req.body;
+      
+      const updatedUser = await storage.updateUser(userId, { isOnline });
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      res.json({ ...updatedUser, password: undefined });
+    } catch (error) {
+      console.error('Update online status error:', error);
+      res.status(500).json({ message: "Failed to update status" });
+    }
+  });
+
   // Seller routes
   app.get("/api/sellers", async (req, res) => {
     try {

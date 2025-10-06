@@ -143,7 +143,7 @@ export default function SellerDashboard() {
               Seller Dashboard
             </h1>
             <Switch
-              checked={user.isOnline}
+              checked={user.isOnline ?? false}
               onCheckedChange={(checked) => updateOnlineStatusMutation.mutate(checked)}
               disabled={updateOnlineStatusMutation.isPending}
               data-testid="switch-online-status"
