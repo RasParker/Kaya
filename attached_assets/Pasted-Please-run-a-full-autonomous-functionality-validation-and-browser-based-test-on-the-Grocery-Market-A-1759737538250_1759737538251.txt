@@ -1,0 +1,49 @@
+Please run a full autonomous functionality validation and browser-based test on the Grocery Market App.
+
+Goals:
+1. Verify, repair, and complete all role-specific flows (Buyer, Seller, Kayayo, Rider, Admin).
+2. Automatically detect and fix missing or broken functionalities.
+3. Optimize UI navigation and ensure full alignment with SPEC.md and USER_FLOWS.md.
+
+Tasks:
+1. Launch the app and simulate real-world user behavior for each role:
+   - Buyer: login, browse, add to cart, checkout, make payment, track order, rate order.
+   - Seller: login, view products, add/edit items, handle incoming orders, update order status, view earnings.
+   - Kayayo: login, view assigned pickups, confirm pickup, mark handover, view history.
+   - Rider: login, accept delivery, confirm pickup from Kayayo, complete delivery, view history and earnings.
+   - Admin: login, manage users, monitor orders, view analytics, handle disputes, and manage payments/markets.
+
+2. Automatically identify and fix issues such as:
+   - Missing or broken links, pages, and components.
+   - Non-functional buttons or form submissions.
+   - API endpoints not returning expected data.
+   - Incomplete UI flows (e.g., missing confirmation pages or actions).
+   - State updates not reflected in dashboards.
+   - Missing transitions between key user actions (e.g., order → pickup → delivery).
+
+3. Detect and implement missing functionalities such as:
+   - Notifications (basic toast or in-app alerts for status updates).
+   - Order status syncing across all roles.
+   - Loading states and error handling on slow or failed requests.
+   - Basic ratings/review submission for Buyers.
+   - Transaction/earnings history for Sellers, Kayayo, and Riders.
+   - Dispute flow initiation (Buyer flagging an order) linked to Admin panel.
+   - Log-out functionality for all roles.
+
+4. Perform visual and browser tests:
+   - Verify all pages load correctly in a browser.
+   - Check responsiveness and layout consistency.
+   - Test button clicks, form submissions, and navigation paths.
+   - Capture screenshots for failed pages or unhandled routes.
+
+5. Generate a detailed report:
+   - ✅ Functional flows verified
+   - ⚙️ Missing features implemented
+   - 🧩 Broken links/components fixed
+   - ⚠️ Unresolved issues (with brief notes)
+   - ⏱ Execution summary (tests passed, fixed, skipped)
+
+6. Do not overwrite SPEC.md or USER_FLOWS.md — use them strictly as reference for expected behavior.
+
+Objective:
+Ensure the Grocery Market App is fully functional and feature-complete for all user roles (Buyer, Seller, Kayayo, Rider, Admin), with no broken navigation, missing actions, or unimplemented pages. The app should be ready for demo or MVP launch testing.
