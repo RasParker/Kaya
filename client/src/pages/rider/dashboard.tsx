@@ -19,6 +19,7 @@ import {
   Package,
   DollarSign
 } from "lucide-react";
+import type { Order } from "@shared/schema";
 
 export default function RiderDashboard() {
   const [, setLocation] = useLocation();
@@ -26,7 +27,7 @@ export default function RiderDashboard() {
   const { lastMessage } = useWebSocket();
   const { toast } = useToast();
 
-  const { data: orders = [] } = useQuery({
+  const { data: orders = [] } = useQuery<Order[]>({
     queryKey: ["/api/orders"],
     enabled: !!user,
   });
@@ -70,17 +71,17 @@ export default function RiderDashboard() {
     return null;
   }
 
-  const activeDeliveries = orders.filter((order: any) => 
+  const activeDeliveries = Array.isArray(orders) ? orders.filter((order: Order) => 
     order.riderId === user.id && order.status === 'in_transit'
-  );
+  ) : [];
 
-  const availableDeliveries = orders.filter((order: any) => 
+  const availableDeliveries = Array.isArray(orders) ? orders.filter((order: Order) => 
     !order.riderId && order.status === 'ready_for_pickup'
-  );
+  ) : [];
 
-  const completedDeliveries = orders.filter((order: any) => 
+  const completedDeliveries = Array.isArray(orders) ? orders.filter((order: Order) => 
     order.riderId === user.id && order.status === 'delivered'
-  );
+  ) : [];
 
   // Calculate today's earnings
   const todayDeliveries = completedDeliveries.filter((order: any) => {
@@ -127,7 +128,7 @@ export default function RiderDashboard() {
             <div className="flex items-center justify-center gap-1 mb-1">
               <Star className="h-4 w-4 text-secondary" />
               <span className="text-lg font-bold text-secondary" data-testid="rider-rating">
-                {parseFloat(user.rating).toFixed(1)}
+                {parseFloat(user.rating || '0').toFixed(1)}
               </span>
             </div>
             <p className="text-xs text-muted-foreground">Rating</p>
@@ -235,7 +236,7 @@ export default function RiderDashboard() {
               <div className="text-center">
                 <div className="flex items-center justify-center gap-1 mb-1">
                   <Star className="h-4 w-4 text-yellow-500" />
-                  <span className="font-bold">{parseFloat(user.rating).toFixed(1)}</span>
+                  <span className="font-bold">{parseFloat(user.rating || '0').toFixed(1)}</span>
                 </div>
                 <p className="text-xs text-muted-foreground">Average Rating</p>
               </div>
