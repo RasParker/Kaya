@@ -232,7 +232,10 @@ export default function KayayoDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <AvailableOrdersList onAccept={(orderId: string) => acceptOrderMutation.mutate(orderId)} />
+              <AvailableOrdersList 
+                onAccept={(orderId: string) => acceptOrderMutation.mutate(orderId)}
+                onPreview={(order: Order) => setPreviewOrder(order)}
+              />
             </CardContent>
           </Card>
         )}
@@ -376,7 +379,7 @@ function ActiveOrderCard({ order }: { order: Order }) {
   );
 }
 
-function AvailableOrdersList({ onAccept }: { onAccept: (orderId: string) => void }) {
+function AvailableOrdersList({ onAccept, onPreview }: { onAccept: (orderId: string) => void; onPreview: (order: Order) => void }) {
   const { data: pendingOrders = [] } = useQuery<Order[]>({
     queryKey: ["/api/orders/pending"],
     refetchInterval: 5000, // Refresh every 5 seconds for real-time updates
@@ -399,7 +402,7 @@ function AvailableOrdersList({ onAccept }: { onAccept: (orderId: string) => void
           key={order.id}
           order={order}
           onAccept={onAccept}
-          onPreview={() => setPreviewOrder(order)}
+          onPreview={() => onPreview(order)}
         />
       ))}
     </div>
