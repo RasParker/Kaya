@@ -1167,11 +1167,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/kayayos/available", async (req, res) => {
     try {
       const market = req.query.market as string || 'Makola';
-      const availableKayayos = await storage.getAvailableKayayos(market);
+      
+      // Get all kayayos for the market (not just available ones for home page display)
+      const allKayayos = await storage.db
+        .select()
+        .from(schema.kayayoAvailability)
+        .where(eq(schema.kayayoAvailability.market, market));
 
       // Get user data for each kayayo
       const kayayosWithUserData = await Promise.all(
-        availableKayayos.map(async (availability) => {
+        allKayayos.map(async (availability) => {
           const user = await storage.getUser(availability.kayayoId);
           return { ...availability, user };
         })
