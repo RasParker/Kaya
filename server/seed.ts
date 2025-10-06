@@ -127,7 +127,7 @@ async function seed() {
     }
     console.log(`✓ Created ${products.length} products across 7 categories`);
 
-    // Create kayayo user
+    // Create kayayo users
     const kayayoPassword = await bcrypt.hash('password123', saltRounds);
     const kayayoUser = await storage.createUser({
       phone: '+233244555666',
@@ -148,7 +148,47 @@ async function seed() {
       maxOrders: 3,
       currentOrders: 0,
     });
-    console.log('✓ Created kayayo user with availability');
+
+    const kayayoUser2 = await storage.createUser({
+      phone: '+233244555777',
+      email: 'kayayo2@test.com',
+      name: 'Abena',
+      userType: 'kayayo',
+      password: kayayoPassword,
+      profileImage: null,
+      isVerified: true,
+      isOnline: true,
+    });
+
+    await storage.createKayayoAvailability({
+      kayayoId: kayayoUser2.id,
+      market: 'Makola',
+      isAvailable: true,
+      currentLocation: 'Section B',
+      maxOrders: 5,
+      currentOrders: 1,
+    });
+
+    const kayayoUser3 = await storage.createUser({
+      phone: '+233244555888',
+      email: 'kayayo3@test.com',
+      name: 'Ama',
+      userType: 'kayayo',
+      password: kayayoPassword,
+      profileImage: null,
+      isVerified: true,
+      isOnline: true,
+    });
+
+    await storage.createKayayoAvailability({
+      kayayoId: kayayoUser3.id,
+      market: 'Makola',
+      isAvailable: false,
+      currentLocation: 'Section C',
+      maxOrders: 4,
+      currentOrders: 4,
+    });
+    console.log('✓ Created 3 kayayo users with availability');
 
     // Create rider user
     const riderPassword = await bcrypt.hash('password123', saltRounds);
@@ -169,7 +209,9 @@ async function seed() {
     console.log('Admin: admin@makolaconnect.com / admin123');
     console.log('Buyer: +233244123456 / password123');
     console.log('Seller: +233244987654 / password123');
-    console.log('Kayayo: +233244555666 / password123');
+    console.log('Kayayo 1: +233244555666 / password123');
+    console.log('Kayayo 2: +233244555777 / password123');
+    console.log('Kayayo 3: +233244555888 / password123');
     console.log('Rider: +233244666777 / password123');
 
   } catch (error) {
