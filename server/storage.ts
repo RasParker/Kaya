@@ -20,10 +20,12 @@ import {
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import bcrypt from "bcrypt";
-import { drizzle } from 'drizzle-orm/neon-http';
-import { neon } from '@neondatabase/serverless';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import pg from 'pg';
 import { eq, like, and } from 'drizzle-orm';
 import * as schema from '@shared/schema';
+
+const { Pool } = pg;
 
 export interface IStorage {
   // Users
@@ -99,20 +101,16 @@ export interface IStorage {
 
 export class PostgresStorage implements IStorage {
   private db: ReturnType<typeof drizzle>;
+  private pool: Pool;
 
   constructor() {
     if (!process.env.DATABASE_URL) {
       throw new Error('DATABASE_URL is required for PostgreSQL storage');
     }
-    // Note: neon-http handles SSL automatically via the DATABASE_URL connection string
-    // No need for explicit SSL certificate configuration like with node-postgres
-    const sql = neon(process.env.DATABASE_URL, {
-      fetchOptions: {
-        cache: 'no-store',
-      },
-      fullResults: true,
+    this.pool = new Pool({
+      connectionString: process.env.DATABASE_URL,
     });
-    this.db = drizzle(sql, { schema });
+    this.db = drizzle(this.pool, { schema });
   }
 
   // Users
