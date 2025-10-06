@@ -8,7 +8,8 @@ import OrderCard from "@/components/order-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingCart, Search, Leaf, Sprout, Fish, MoreHorizontal, Home, Users, Package, User, ChevronDown, MapPin } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ShoppingCart, Search, Leaf, Sprout, Fish, MoreHorizontal, Home, Users, Package, User, MapPin } from "lucide-react";
 import { useState } from "react";
 
 const categories = [
@@ -24,6 +25,7 @@ export default function HomePage() {
   const { user, isAuthenticated } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState("Vegetables");
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedMarket, setSelectedMarket] = useState("Makola Market");
 
   // Role-based redirection for authenticated users
   if (isAuthenticated && user) {
@@ -106,12 +108,16 @@ export default function HomePage() {
         {/* Location Selector */}
         <div className="flex items-center gap-2 mb-4">
           <MapPin className="h-4 w-4 text-primary" />
-          <div className="relative flex-1">
-            <select className="w-full bg-muted rounded-lg px-3 py-2 pr-10 text-sm border-0 appearance-none" data-testid="select-market">
-              <option>Makola Market</option>
-              <option>Kaneshie Market (Coming Soon)</option>
-            </select>
-            <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+          <div className="flex-1">
+            <Select value={selectedMarket} onValueChange={setSelectedMarket}>
+              <SelectTrigger className="bg-muted border-0" data-testid="select-market">
+                <SelectValue placeholder="Select market" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Makola Market">Makola Market</SelectItem>
+                <SelectItem value="Kaneshie Market (Coming Soon)" disabled>Kaneshie Market (Coming Soon)</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
