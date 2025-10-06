@@ -106,7 +106,7 @@ export default function HomePage() {
         {/* Location Selector */}
         <div className="flex items-center gap-2 mb-4">
           <div className="w-2 h-2 bg-primary rounded-full"></div>
-          <select className="flex-1 bg-muted rounded-lg px-3 py-2 text-sm border-0" data-testid="select-market">
+          <select className="flex-1 bg-muted rounded-lg px-3 py-2 pr-8 text-sm border-0" data-testid="select-market">
             <option>Makola Market</option>
             <option>Kaneshie Market (Coming Soon)</option>
           </select>
