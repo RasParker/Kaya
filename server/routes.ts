@@ -4,6 +4,8 @@ import { WebSocketServer, WebSocket } from "ws";
 import bcrypt from "bcrypt";
 import { storage } from "./storage";
 import { insertUserSchema, insertProductSchema, insertCartItemSchema, insertOrderSchema } from "@shared/schema";
+import * as schema from "@shared/schema";
+import { eq, like, and } from "drizzle-orm";
 import jwt from "jsonwebtoken";
 import { OrderStateMachine, OrderStatus, OrderStateError } from "./orderStateMachine";
 
@@ -304,21 +306,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/products", async (req, res) => {
     const { sellerId, category, search } = req.query;
 
-    let query = storage.db.select().from(storage.products);
+    let query = storage.db.select().from(schema.products);
 
     const conditions = [];
     if (sellerId) {
-      conditions.push(storage.eq(storage.products.sellerId, sellerId as string));
+      conditions.push(eq(schema.products.sellerId, sellerId as string));
     }
     if (category) {
-      conditions.push(storage.eq(storage.products.category, category as string));
+      conditions.push(eq(schema.products.category, category as string));
     }
     if (search) {
-      conditions.push(storage.like(storage.products.name, `%${search}%`));
+      conditions.push(like(schema.products.name, `%${search}%`));
     }
 
     if (conditions.length > 0) {
-      query = query.where(storage.and(...conditions)) as any;
+      query = query.where(and(...conditions)) as any;
     }
 
     const result = await query;
