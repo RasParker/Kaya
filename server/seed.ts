@@ -188,7 +188,27 @@ async function seed() {
       maxOrders: 4,
       currentOrders: 4,
     });
-    console.log('✓ Created 3 kayayo users with availability');
+
+    const kayayoUser4 = await storage.createUser({
+      phone: '+233244555999',
+      email: 'kayayo4@test.com',
+      name: 'Akua',
+      userType: 'kayayo',
+      password: kayayoPassword,
+      profileImage: null,
+      isVerified: true,
+      isOnline: true,
+    });
+
+    await storage.createKayayoAvailability({
+      kayayoId: kayayoUser4.id,
+      market: 'Makola',
+      isAvailable: true,
+      currentLocation: 'Main Gate',
+      maxOrders: 5,
+      currentOrders: 2,
+    });
+    console.log('✓ Created 4 kayayo users with availability');
 
     // Create rider user
     const riderPassword = await bcrypt.hash('password123', saltRounds);
@@ -212,6 +232,7 @@ async function seed() {
     console.log('Kayayo 1: +233244555666 / password123');
     console.log('Kayayo 2: +233244555777 / password123');
     console.log('Kayayo 3: +233244555888 / password123');
+    console.log('Kayayo 4: +233244555999 / password123');
     console.log('Rider: +233244666777 / password123');
 
   } catch (error) {
