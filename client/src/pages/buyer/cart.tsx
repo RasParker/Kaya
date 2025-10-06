@@ -188,7 +188,7 @@ export default function Cart() {
       </header>
 
       {/* Cart Content */}
-      <main className="p-4 pb-32">
+      <main className="p-4 pb-24">
         {cartItems.length === 0 ? (
           <div className="text-center py-12">
             <ShoppingBag className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
@@ -386,28 +386,26 @@ export default function Cart() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Checkout Button */}
+            <div className="pt-4">
+              <Button
+                className="w-full h-12 text-lg font-semibold shadow-lg"
+                onClick={handleCheckout}
+                disabled={!selectedKayayo || !deliveryAddress.trim()}
+                data-testid="button-checkout"
+              >
+                {!selectedKayayo 
+                  ? "Select a Kayayo to Continue"
+                  : !deliveryAddress.trim()
+                    ? "Enter Delivery Address"
+                    : "Proceed to Payment"
+                }
+              </Button>
+            </div>
           </div>
         )}
       </main>
-
-      {/* Checkout Button */}
-      {cartItems.length > 0 && (
-        <div className="fixed bottom-16 left-1/2 -translate-x-1/2 w-full max-w-[414px] p-4 bg-background border-t border-border z-50">
-          <Button
-            className="w-full h-12 text-lg font-semibold shadow-lg"
-            onClick={handleCheckout}
-            disabled={!selectedKayayo || !deliveryAddress.trim()}
-            data-testid="button-checkout"
-          >
-            {!selectedKayayo 
-              ? "Select a Kayayo to Continue"
-              : !deliveryAddress.trim()
-                ? "Enter Delivery Address"
-                : "Proceed to Payment"
-            }
-          </Button>
-        </div>
-      )}
     </MobileLayout>
   );
 }
