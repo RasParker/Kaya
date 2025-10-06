@@ -392,22 +392,20 @@ export default function Cart() {
 
       {/* Checkout Button */}
       {cartItems.length > 0 && (
-        <div className="fixed bottom-16 left-0 right-0 p-4 bg-background border-t border-border z-50">
-          <div className="max-w-md mx-auto">
-            <Button
-              className="w-full h-12 text-lg font-semibold shadow-lg"
-              onClick={handleCheckout}
-              disabled={!selectedKayayo || !deliveryAddress.trim()}
-              data-testid="button-checkout"
-            >
-              {!selectedKayayo 
-                ? "Select a Kayayo to Continue"
-                : !deliveryAddress.trim()
-                  ? "Enter Delivery Address"
-                  : "Proceed to Payment"
-              }
-            </Button>
-          </div>
+        <div className="fixed bottom-16 left-1/2 -translate-x-1/2 w-full max-w-[414px] p-4 bg-background border-t border-border z-50">
+          <Button
+            className="w-full h-12 text-lg font-semibold shadow-lg"
+            onClick={handleCheckout}
+            disabled={!selectedKayayo || !deliveryAddress.trim()}
+            data-testid="button-checkout"
+          >
+            {!selectedKayayo 
+              ? "Select a Kayayo to Continue"
+              : !deliveryAddress.trim()
+                ? "Enter Delivery Address"
+                : "Proceed to Payment"
+            }
+          </Button>
         </div>
       )}
     </MobileLayout>
