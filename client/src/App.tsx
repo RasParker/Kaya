@@ -12,6 +12,7 @@ import Register from "@/pages/auth/register";
 import AdminLogin from "@/pages/auth/admin-login";
 import Browse from "@/pages/buyer/browse";
 import SellersPage from "@/pages/buyer/sellers";
+import SellerProfile from "@/pages/buyer/seller-profile";
 import KayayoProfile from "@/pages/buyer/kayayo-profile";
 import Cart from "@/pages/buyer/cart";
 import Payment from "@/pages/buyer/payment";
@@ -53,6 +54,11 @@ function Router() {
       <Route path="/sellers">
         <ProtectedRoute allowedRoles={['buyer']}>
           <SellersPage />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/seller-profile">
+        <ProtectedRoute allowedRoles={['buyer']}>
+          <SellerProfile />
         </ProtectedRoute>
       </Route>
       <Route path="/kayayo-profile">
