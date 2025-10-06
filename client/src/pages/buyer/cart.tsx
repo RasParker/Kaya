@@ -29,6 +29,7 @@ export default function Cart() {
   const [deliveryAddress, setDeliveryAddress] = useState("123 Main Street, Accra");
   const [allowSubstitutions, setAllowSubstitutions] = useState(true);
   const [selectedKayayo, setSelectedKayayo] = useState<string | null>(null);
+  const [updatingItemId, setUpdatingItemId] = useState<string | null>(null);
   
   const { data: cartItems = [], isLoading } = useQuery<CartItemWithProduct[]>({
     queryKey: ["/api/cart"],
@@ -42,11 +43,16 @@ export default function Cart() {
 
   const updateCartMutation = useMutation({
     mutationFn: async ({ itemId, updates }: { itemId: string; updates: Partial<CartItem> }) => {
+      setUpdatingItemId(itemId);
       const response = await apiRequest("PATCH", `/api/cart/${itemId}`, updates);
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+      setUpdatingItemId(null);
+    },
+    onError: () => {
+      setUpdatingItemId(null);
     },
   });
 
@@ -246,7 +252,7 @@ export default function Cart() {
                       onQuantityChange={handleQuantityChange}
                       onSubstitutionToggle={handleSubstitutionToggle}
                       onRemove={() => removeFromCartMutation.mutate(item.id)}
-                      isUpdating={updateCartMutation.isPending}
+                      isUpdating={updatingItemId === item.id}
                     />
                   ))}
                 </CardContent>
@@ -386,20 +392,22 @@ export default function Cart() {
 
       {/* Checkout Button */}
       {cartItems.length > 0 && (
-        <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 w-full max-w-md px-4 z-40">
-          <Button
-            className="w-full h-12 text-lg font-semibold shadow-lg"
-            onClick={handleCheckout}
-            disabled={!selectedKayayo || !deliveryAddress.trim()}
-            data-testid="button-checkout"
-          >
-            {!selectedKayayo 
-              ? "Select a Kayayo to Continue"
-              : !deliveryAddress.trim()
-                ? "Enter Delivery Address"
-                : "Proceed to Payment"
-            }
-          </Button>
+        <div className="fixed bottom-16 left-0 right-0 p-4 bg-background border-t border-border z-50">
+          <div className="max-w-md mx-auto">
+            <Button
+              className="w-full h-12 text-lg font-semibold shadow-lg"
+              onClick={handleCheckout}
+              disabled={!selectedKayayo || !deliveryAddress.trim()}
+              data-testid="button-checkout"
+            >
+              {!selectedKayayo 
+                ? "Select a Kayayo to Continue"
+                : !deliveryAddress.trim()
+                  ? "Enter Delivery Address"
+                  : "Proceed to Payment"
+              }
+            </Button>
+          </div>
         </div>
       )}
     </MobileLayout>

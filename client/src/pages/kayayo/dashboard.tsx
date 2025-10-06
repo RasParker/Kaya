@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { useLocation } from "wouter";
@@ -9,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { 
   MapPin, 
@@ -31,6 +33,7 @@ export default function KayayoDashboard() {
   const { user } = useAuth();
   const { lastMessage } = useWebSocket();
   const { toast } = useToast();
+  const [previewOrder, setPreviewOrder] = useState<Order | null>(null);
 
   const { data: availability, refetch: refetchAvailability } = useQuery({
     queryKey: ["/api/kayayos", user?.id, "availability"],
@@ -280,6 +283,58 @@ export default function KayayoDashboard() {
           </CardContent>
         </Card>
       </main>
+
+      {/* Quick Preview Dialog */}
+      <Dialog open={!!previewOrder} onOpenChange={() => setPreviewOrder(null)}>
+        <DialogContent className="max-w-md">
+          {previewOrder && (
+            <>
+              <DialogHeader>
+                <DialogTitle>Order #{previewOrder.id.slice(0, 8)}</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Kayayo Fee</p>
+                    <p className="text-lg font-bold text-primary">₵{parseFloat(previewOrder.kayayoFee || "0").toFixed(2)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Total Amount</p>
+                    <p className="text-lg font-semibold">₵{parseFloat(previewOrder.totalAmount || "0").toFixed(2)}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <MapPin className="h-4 w-4 text-muted-foreground" />
+                    <p className="text-xs text-muted-foreground">Delivery Address</p>
+                  </div>
+                  <p className="text-sm">{previewOrder.deliveryAddress}</p>
+                </div>
+
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <User className="h-4 w-4 text-muted-foreground" />
+                    <p className="text-xs text-muted-foreground">Payment Method</p>
+                  </div>
+                  <Badge>{previewOrder.paymentMethod || 'Cash'}</Badge>
+                </div>
+
+                <Button 
+                  className="w-full"
+                  onClick={() => {
+                    acceptOrderMutation.mutate(previewOrder.id);
+                    setPreviewOrder(null);
+                  }}
+                  data-testid="button-accept-from-preview"
+                >
+                  Accept Order
+                </Button>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </MobileLayout>
   );
 }
@@ -344,13 +399,14 @@ function AvailableOrdersList({ onAccept }: { onAccept: (orderId: string) => void
           key={order.id}
           order={order}
           onAccept={onAccept}
+          onPreview={() => setPreviewOrder(order)}
         />
       ))}
     </div>
   );
 }
 
-function TimedOrderCard({ order, onAccept }: { order: Order; onAccept: (orderId: string) => void }) {
+function TimedOrderCard({ order, onAccept, onPreview }: { order: Order; onAccept: (orderId: string) => void; onPreview: () => void }) {
   // Calculate time remaining (5 minutes from creation)
   const createdAt = order.createdAt ? new Date(order.createdAt) : new Date();
   const now = new Date();
@@ -428,7 +484,7 @@ function TimedOrderCard({ order, onAccept }: { order: Order; onAccept: (orderId:
             size="sm" 
             variant="outline"
             className="px-3"
-            onClick={() => alert('Quick preview feature coming soon!')}
+            onClick={onPreview}
             data-testid={`button-preview-${order.id}`}
           >
             <Eye className="h-4 w-4" />

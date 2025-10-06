@@ -22,7 +22,7 @@ export default function OrderConfirmationPage() {
 
   // Get order details
   const { data: order, isLoading, error } = useQuery<OrderWithDetails>({
-    queryKey: ["/api/orders", orderId],
+    queryKey: [`/api/orders/${orderId}`],
     enabled: !!orderId,
     refetchInterval: 5000, // Refresh every 5 seconds for live updates
   });

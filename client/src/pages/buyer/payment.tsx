@@ -241,24 +241,26 @@ export default function PaymentPage() {
       </div>
 
       {/* Confirm Order Button */}
-      <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 w-full max-w-md px-4 z-40">
-        <Button
-          className="w-full h-12 text-lg font-semibold shadow-lg"
-          onClick={handleConfirmOrder}
-          disabled={createOrderMutation.isPending || !selectedPayment}
-          data-testid="button-confirm-order"
-        >
-          {createOrderMutation.isPending ? (
-            <>
-              <LoadingSpinner size="sm" className="mr-2" />
-              Placing Order...
-            </>
-          ) : !selectedPayment ? (
-            "Select Payment Method"
-          ) : (
-            `Confirm Order - ₵${grandTotal.toFixed(2)}`
-          )}
-        </Button>
+      <div className="fixed bottom-16 left-0 right-0 p-4 bg-background border-t border-border z-50">
+        <div className="max-w-md mx-auto">
+          <Button
+            className="w-full h-12 text-lg font-semibold shadow-lg"
+            onClick={handleConfirmOrder}
+            disabled={createOrderMutation.isPending || !selectedPayment}
+            data-testid="button-confirm-order"
+          >
+            {createOrderMutation.isPending ? (
+              <>
+                <LoadingSpinner size="sm" className="mr-2" />
+                Placing Order...
+              </>
+            ) : !selectedPayment ? (
+              "Select Payment Method"
+            ) : (
+              `Confirm Order - ₵${grandTotal.toFixed(2)}`
+            )}
+          </Button>
+        </div>
       </div>
     </MobileLayout>
   );

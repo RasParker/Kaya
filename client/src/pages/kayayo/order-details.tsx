@@ -30,7 +30,7 @@ export default function KayayoOrderDetails() {
   const { toast } = useToast();
 
   const { data: order, isLoading } = useQuery<Order>({
-    queryKey: ["/api/orders", params?.orderId],
+    queryKey: [`/api/orders/${params?.orderId}`],
     enabled: !!params?.orderId,
   });
 
