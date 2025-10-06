@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useLocation, useRoute } from "wouter";
+import { useLocation, useRoute, useSearch } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, CheckCircle, Clock, AlertCircle, User, Package, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,8 @@ interface OrderWithDetails extends Order {
 export default function OrderConfirmationPage() {
   const [, setLocation] = useLocation();
   const [, params] = useRoute("/buyer/order-confirmation");
-  const orderId = new URLSearchParams(window.location.search).get("orderId");
+  const searchString = useSearch();
+  const orderId = new URLSearchParams(searchString).get("orderId");
 
   // Get order details
   const { data: order, isLoading, error } = useQuery<OrderWithDetails>({

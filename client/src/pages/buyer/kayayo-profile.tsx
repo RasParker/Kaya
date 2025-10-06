@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useLocation } from "wouter";
+import { useLocation, useSearch } from "wouter";
 import MobileLayout from "@/components/layout/mobile-layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,7 +10,8 @@ export default function KayayoProfile() {
   const [location, setLocation] = useLocation();
   
   // Extract kayayo ID from URL
-  const params = new URLSearchParams(location.split('?')[1] || '');
+  const searchString = useSearch();
+  const params = new URLSearchParams(searchString);
   const kayayoId = params.get('id');
 
   // Fetch all available kayayos and find the specific one

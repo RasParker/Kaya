@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useLocation } from "wouter";
+import { useLocation, useSearch } from "wouter";
 import MobileLayout from "@/components/layout/mobile-layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,7 +25,8 @@ export default function Browse() {
   const queryClient = useQueryClient();
 
   // Extract seller from URL query parameter
-  const params = new URLSearchParams(location.split('?')[1] || '');
+  const searchString = useSearch();
+  const params = new URLSearchParams(searchString);
   const sellerId = params.get('sellerId');
 
   const { data: products = [], isLoading } = useQuery<Product[]>({
