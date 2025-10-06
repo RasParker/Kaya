@@ -36,7 +36,7 @@ export default function SellerProfile() {
 
   // Fetch seller by ID
   const { data: seller, isLoading } = useQuery<SellerWithUser>({
-    queryKey: ["/api/sellers", sellerId],
+    queryKey: [`/api/sellers/${sellerId}`],
     enabled: !!sellerId,
   });
 
