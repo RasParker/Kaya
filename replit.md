@@ -4,6 +4,13 @@ This is a marketplace application called "rest-express" designed for connecting 
 
 ## Recent Changes
 
+**2025-10-06**: User flow bug fixes
+- Fixed kayayo profile navigation - now correctly uses kayayo user ID instead of availability record ID
+- Added GET /api/orders/:id endpoint with proper role-based access control for fetching individual orders
+- Created dedicated PATCH /api/orders/:id/accept endpoint for kayayos to accept shopping orders
+- Fixed floating button positioning on cart and payment pages with proper z-index and styling
+- Fixed seller filter on browse page - corrected query parameter from 'seller' to 'sellerId' to properly filter products by seller
+
 **2025-10-06**: Automatic database seeding on startup
 - Implemented automatic database seeding that runs on every application startup
 - Seed checks if test users already exist to avoid duplicates
