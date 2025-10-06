@@ -4,6 +4,14 @@ This is a marketplace application called "rest-express" designed for connecting 
 
 ## Recent Changes
 
+**2025-10-06**: Automatic database seeding on startup
+- Implemented automatic database seeding that runs on every application startup
+- Seed checks if test users already exist to avoid duplicates
+- Ensures all 5 test users (admin, buyer, seller, kayayo, rider) are always available
+- Creates 30 sample products across 7 categories (vegetables, roots, fruits, fish, grains, spices, household)
+- Sets up seller profile and kayayo availability automatically
+- Test logins now work immediately without manual database seeding
+
 **2025-10-04**: Quick test login feature added
 - Added tabbed login interface with "Manual Login" and "Test Logins" tabs
 - Test Logins tab provides one-click authentication for all user types

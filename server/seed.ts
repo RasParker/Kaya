@@ -2,11 +2,19 @@ import { storage } from './storage';
 import bcrypt from 'bcrypt';
 
 async function seed() {
-  console.log('🌱 Starting database seed...');
+  console.log('🌱 Checking database seed status...');
   
   const saltRounds = 12;
 
   try {
+    const existingAdmin = await storage.getUserByEmail('admin@makolaconnect.com');
+    if (existingAdmin) {
+      console.log('✓ Database already seeded, skipping...');
+      return;
+    }
+
+    console.log('🌱 Starting database seed...');
+
     // Create admin user
     const adminPassword = await bcrypt.hash('admin123', saltRounds);
     const admin = await storage.createUser({
