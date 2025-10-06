@@ -173,7 +173,7 @@ export default function PaymentPage() {
         </div>
       </header>
 
-      <div className="p-4 space-y-6">
+      <div className="p-4 pb-24 space-y-6">
         {/* Order Summary */}
         <Card>
           <CardHeader>
@@ -238,11 +238,9 @@ export default function PaymentPage() {
             </RadioGroup>
           </CardContent>
         </Card>
-      </div>
 
-      {/* Confirm Order Button */}
-      <div className="fixed bottom-16 left-0 right-0 p-4 bg-background border-t border-border z-50">
-        <div className="max-w-md mx-auto">
+        {/* Confirm Order Button */}
+        <div className="pt-4">
           <Button
             className="w-full h-12 text-lg font-semibold shadow-lg"
             onClick={handleConfirmOrder}
