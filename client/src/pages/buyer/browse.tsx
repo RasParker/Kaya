@@ -49,6 +49,7 @@ const ImageCarousel = ({ images, productName }: { images: string[]; productName:
               }`}
               onClick={() => setCurrentImageIndex(index)}
               aria-label={`Go to image ${index + 1}`}
+              data-testid={`button-image-dot-${index}`}
             />
           ))}
         </div>
