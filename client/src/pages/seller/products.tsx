@@ -430,7 +430,7 @@ export default function SellerProducts() {
                 )}
               />
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <FormField
                   control={form.control}
                   name="unit"
@@ -475,28 +475,28 @@ export default function SellerProducts() {
                     </FormItem>
                   )}
                 />
-              </div>
 
-              <FormField
-                control={form.control}
-                name="stockQty"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Stock Quantity</FormLabel>
-                    <FormControl>
-                      <Input 
-                        {...field} 
-                        type="number" 
-                        min="0"
-                        step="1" 
-                        placeholder="0" 
-                        data-testid="input-stock-qty"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <FormField
+                  control={form.control}
+                  name="stockQty"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Stock Qty</FormLabel>
+                      <FormControl>
+                        <Input 
+                          {...field} 
+                          type="number" 
+                          min="0"
+                          step="1" 
+                          placeholder="0" 
+                          data-testid="input-stock-qty"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
               <FormField
                 control={form.control}
