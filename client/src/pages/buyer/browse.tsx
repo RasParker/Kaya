@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Search, Filter, Plus, ArrowLeft } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Search, Filter, Plus, ArrowLeft, X } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
@@ -20,6 +21,8 @@ export default function Browse() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [addingProductId, setAddingProductId] = useState<string | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -155,6 +158,10 @@ export default function Browse() {
               <ProductCard 
                 key={product.id} 
                 product={product} 
+                onClick={() => {
+                  setSelectedProduct(product);
+                  setIsModalOpen(true);
+                }}
                 onAddToCart={() => addToCartMutation.mutate({ productId: product.id, quantity: 1 })}
                 isAddingToCart={addingProductId === product.id}
                 buyerId={buyerId}
@@ -163,23 +170,119 @@ export default function Browse() {
           </div>
         )}
       </main>
+
+      {/* Product Detail Modal */}
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="max-w-md">
+          {selectedProduct && (
+            <>
+              <DialogHeader>
+                <DialogTitle>{selectedProduct.name}</DialogTitle>
+                <DialogDescription>{selectedProduct.description || "No description available"}</DialogDescription>
+              </DialogHeader>
+              
+              <div className="space-y-4">
+                {/* Product Image */}
+                <div className="aspect-square bg-muted rounded-lg flex items-center justify-center overflow-hidden">
+                  {selectedProduct.image ? (
+                    <img
+                      src={selectedProduct.image}
+                      alt={selectedProduct.name}
+                      className="w-full h-full object-cover"
+                      data-testid="modal-product-image"
+                    />
+                  ) : (
+                    <span className="text-8xl">🥬</span>
+                  )}
+                </div>
+
+                {/* Product Details */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Price</span>
+                    <span className="font-bold text-xl text-primary">
+                      ₵{parseFloat(selectedProduct.price).toFixed(2)}
+                    </span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Unit</span>
+                    <span className="text-sm font-medium">{selectedProduct.unit}</span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Category</span>
+                    <Badge variant="secondary">{selectedProduct.category}</Badge>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Availability</span>
+                    {selectedProduct.isAvailable ? (
+                      <Badge variant="secondary" className="bg-green-100 text-green-800">
+                        Available
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary" className="bg-red-100 text-red-800">
+                        Out of Stock
+                      </Badge>
+                    )}
+                  </div>
+
+                  {selectedProduct.allowSubstitution && (
+                    <div className="flex items-center gap-2 p-2 bg-muted rounded-md">
+                      <span className="text-xs text-muted-foreground">
+                        ✓ Substitution allowed if unavailable
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Add to Cart Button */}
+                <Button
+                  className="w-full"
+                  disabled={!selectedProduct.isAvailable || !buyerId || addingProductId === selectedProduct.id}
+                  onClick={() => {
+                    addToCartMutation.mutate({ productId: selectedProduct.id, quantity: 1 });
+                    setIsModalOpen(false);
+                  }}
+                  data-testid="modal-add-to-cart"
+                >
+                  {addingProductId === selectedProduct.id ? (
+                    <>
+                      <LoadingSpinner size="sm" className="w-4 h-4 mr-2" />
+                      Adding...
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add to Cart
+                    </>
+                  )}
+                </Button>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </MobileLayout>
   );
 }
 
 function ProductCard({ 
   product, 
+  onClick,
   onAddToCart, 
   isAddingToCart, 
   buyerId 
 }: { 
-  product: Product; 
+  product: Product;
+  onClick: () => void;
   onAddToCart: () => void; 
   isAddingToCart: boolean; 
   buyerId?: string; 
 }) {
   return (
-    <Card className="overflow-hidden" data-testid={`card-product-${product.id}`}>
+    <Card className="overflow-hidden cursor-pointer" data-testid={`card-product-${product.id}`} onClick={onClick}>
       <CardContent className="p-3">
         {/* Product Image */}
         <div className="aspect-square bg-muted rounded-lg mb-3 flex items-center justify-center">
@@ -224,7 +327,10 @@ function ProductCard({
           size="sm"
           className="w-full text-xs h-8"
           disabled={!product.isAvailable || !buyerId || isAddingToCart}
-          onClick={onAddToCart}
+          onClick={(e) => {
+            e.stopPropagation();
+            onAddToCart();
+          }}
           data-testid={`button-add-to-cart-${product.id}`}
         >
           {isAddingToCart ? (
