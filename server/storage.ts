@@ -101,7 +101,7 @@ export interface IStorage {
 
 export class PostgresStorage implements IStorage {
   private db: ReturnType<typeof drizzle>;
-  private pool: Pool;
+  private pool: InstanceType<typeof Pool>;
 
   constructor() {
     if (!process.env.DATABASE_URL) {
