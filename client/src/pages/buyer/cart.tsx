@@ -386,9 +386,9 @@ export default function Cart() {
 
       {/* Checkout Button */}
       {cartItems.length > 0 && (
-        <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 w-full max-w-md px-4">
+        <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 w-full max-w-md px-4 z-40">
           <Button
-            className="w-full h-12 text-lg font-semibold"
+            className="w-full h-12 text-lg font-semibold shadow-lg"
             onClick={handleCheckout}
             disabled={!selectedKayayo || !deliveryAddress.trim()}
             data-testid="button-checkout"

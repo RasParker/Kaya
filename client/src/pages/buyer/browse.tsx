@@ -32,7 +32,7 @@ export default function Browse() {
     queryKey: ["/api/products", { 
       category: selectedCategory === "all" ? undefined : selectedCategory, 
       search: searchQuery || undefined,
-      seller: sellerId || undefined
+      sellerId: sellerId || undefined
     }],
     enabled: true,
   });

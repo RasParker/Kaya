@@ -241,9 +241,9 @@ export default function PaymentPage() {
       </div>
 
       {/* Confirm Order Button */}
-      <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 w-full max-w-md px-4">
+      <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 w-full max-w-md px-4 z-40">
         <Button
-          className="w-full h-12 text-lg font-semibold"
+          className="w-full h-12 text-lg font-semibold shadow-lg"
           onClick={handleConfirmOrder}
           disabled={createOrderMutation.isPending || !selectedPayment}
           data-testid="button-confirm-order"

@@ -534,6 +534,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get pending orders (for sellers/kayayos/riders) - must be before :id route
+  app.get("/api/orders/pending", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const orders = await storage.getPendingOrders();
+      res.json(orders);
+    } catch (error) {
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+
+  // Get single order by ID
+  app.get("/api/orders/:id", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const order = await storage.getOrder(req.params.id);
+      
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      // Verify user has access to this order
+      const userType = req.user!.userType;
+      const userId = req.user!.userId;
+      
+      let hasAccess = false;
+      
+      if (userType === 'buyer' && order.buyerId === userId) {
+        hasAccess = true;
+      } else if (userType === 'kayayo' && order.kayayoId === userId) {
+        hasAccess = true;
+      } else if (userType === 'rider' && order.riderId === userId) {
+        hasAccess = true;
+      } else if (userType === 'seller') {
+        // Sellers can only see orders that contain their products
+        const sellerProfile = await storage.getSellerByUserId(userId);
+        if (sellerProfile) {
+          const orderItems = await storage.getOrderItemsByOrder(req.params.id);
+          hasAccess = orderItems.some(item => item.sellerId === sellerProfile.id);
+        }
+      }
+
+      if (!hasAccess) {
+        return res.status(403).json({ message: "You don't have access to this order" });
+      }
+
+      // Get additional details
+      const buyer = await storage.getUser(order.buyerId);
+      const kayayo = order.kayayoId ? await storage.getUser(order.kayayoId) : null;
+      const rider = order.riderId ? await storage.getUser(order.riderId) : null;
+
+      res.json({
+        ...order,
+        buyer,
+        kayayo,
+        rider
+      });
+    } catch (error) {
+      console.error("Get order error:", error);
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+
   app.patch("/api/orders/:id", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
       // Only buyers can use the generic PATCH endpoint
@@ -600,12 +661,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get pending orders (for sellers/kayayos/riders)
-  app.get("/api/orders/pending", authenticateToken, async (req: AuthenticatedRequest, res) => {
+  // Kayayo accepts an order
+  app.patch("/api/orders/:id/accept", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
-      const orders = await storage.getPendingOrders();
-      res.json(orders);
+      // Only kayayos can accept orders
+      if (req.user!.userType !== 'kayayo') {
+        return res.status(403).json({ message: "Only kayayos can accept orders" });
+      }
+
+      const order = await storage.getOrder(req.params.id);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      // Update order with kayayo info and status
+      const updatedOrder = await storage.updateOrder(req.params.id, {
+        kayayoId: req.user!.userId,
+        status: "kayayo_accepted"
+      });
+
+      if (!updatedOrder) {
+        return res.status(404).json({ message: "Failed to update order" });
+      }
+
+      // Broadcast to buyer
+      broadcastToUser(updatedOrder.buyerId, {
+        type: 'ORDER_UPDATED',
+        order: updatedOrder
+      });
+
+      // Broadcast to kayayo
+      broadcastToUser(req.user!.userId, {
+        type: 'ORDER_ACCEPTED',
+        order: updatedOrder
+      });
+
+      res.json(updatedOrder);
     } catch (error) {
+      console.error("Accept order error:", error);
       res.status(500).json({ message: "Server error" });
     }
   });

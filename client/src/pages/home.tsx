@@ -196,7 +196,7 @@ export default function HomePage() {
               <KayayoCard 
                 key={kayayo.id} 
                 kayayo={kayayo} 
-                onClick={() => setLocation(`/kayayo-profile?id=${kayayo.id}`)}
+                onClick={() => setLocation(`/kayayo-profile?id=${kayayo.kayayoId}`)}
               />
             )) : null}
           </div>

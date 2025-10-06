@@ -87,14 +87,12 @@ export default function KayayoDashboard() {
 
   const acceptOrderMutation = useMutation({
     mutationFn: async (orderId: string) => {
-      const response = await apiRequest("PATCH", `/api/orders/${orderId}`, {
-        status: "kayayo_accepted",
-        kayayoId: user?.id
-      });
+      const response = await apiRequest("PATCH", `/api/orders/${orderId}/accept`, {});
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/orders/pending"] });
       toast({
         title: "Order accepted",
         description: "You have accepted this shopping order.",
