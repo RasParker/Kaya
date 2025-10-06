@@ -100,7 +100,7 @@ export default function OrderConfirmationPage() {
   return (
     <MobileLayout>
       {/* Header */}
-      <div className="flex items-center gap-3 p-4 border-b">
+      <div className="flex items-center gap-3 p-4 border-b bg-background sticky top-0 z-10">
         <Button
           variant="ghost"
           size="icon"
