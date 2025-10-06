@@ -43,6 +43,7 @@ export const products = pgTable("products", {
   unit: text("unit").notNull(), // 'per tuber', 'per basket', 'per kg'
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
   image: text("image"),
+  images: text("images").array(),
   isAvailable: boolean("is_available").default(true),
   allowSubstitution: boolean("allow_substitution").default(true),
   description: text("description"),

@@ -225,7 +225,9 @@ export default function Browse() {
               <div className="space-y-4">
                 {/* Product Image Carousel */}
                 <ImageCarousel 
-                  images={selectedProduct.images || [selectedProduct.image].filter(Boolean) as string[]} 
+                  images={(selectedProduct.images && selectedProduct.images.length > 0) 
+                    ? selectedProduct.images 
+                    : (selectedProduct.image ? [selectedProduct.image] : [])} 
                   productName={selectedProduct.name} 
                 />
 
