@@ -9,7 +9,7 @@ This is a marketplace application called "rest-express" designed for connecting 
 - Added GET /api/orders/:id endpoint with proper role-based access control for fetching individual orders
 - Created dedicated PATCH /api/orders/:id/accept endpoint for kayayos to accept shopping orders
 - Fixed floating button positioning on cart and payment pages with proper z-index and styling
-- Fixed seller filter on browse page - corrected query parameter from 'seller' to 'sellerId' to properly filter products by seller
+- Fixed seller filter on browse page - updated all seller card navigation (buyer dashboard, sellers page, browse page) to use 'sellerId' query parameter consistently
 
 **2025-10-06**: Automatic database seeding on startup
 - Implemented automatic database seeding that runs on every application startup

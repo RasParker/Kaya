@@ -176,7 +176,7 @@ export default function HomePage() {
               <SellerCard 
                 key={seller.id} 
                 seller={seller} 
-                onClick={() => setLocation(`/browse?seller=${seller.id}`)}
+                onClick={() => setLocation(`/browse?sellerId=${seller.id}`)}
               />
             )) : null}
           </div>
