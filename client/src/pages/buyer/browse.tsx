@@ -256,7 +256,6 @@ export default function Browse() {
                   {sellerInfo && (
                     <div className="p-3 bg-muted rounded-lg mb-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">Seller</span>
                         <span className="text-sm font-semibold" data-testid="modal-seller-name">
                           {sellerInfo.stallName}
                         </span>
@@ -313,48 +312,7 @@ export default function Browse() {
                   )}
                 </div>
 
-                {/* Quantity Selector */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Quantity</label>
-                  <div className="flex items-center gap-3">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                      disabled={quantity <= 1}
-                      data-testid="button-decrease-qty"
-                    >
-                      <Minus className="h-4 w-4" />
-                    </Button>
-                    <Input
-                      type="number"
-                      min="1"
-                      max={selectedProduct.stockQty ?? 0}
-                      value={quantity}
-                      onChange={(e) => {
-                        const val = parseInt(e.target.value) || 1;
-                        const maxStock = selectedProduct.stockQty ?? 0;
-                        setQuantity(Math.min(Math.max(1, val), maxStock));
-                      }}
-                      className="text-center w-20"
-                      data-testid="input-quantity"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      onClick={() => setQuantity(Math.min((selectedProduct.stockQty ?? 0), quantity + 1))}
-                      disabled={quantity >= (selectedProduct.stockQty ?? 0)}
-                      data-testid="button-increase-qty"
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  {quantity >= (selectedProduct.stockQty ?? 0) && (selectedProduct.stockQty ?? 0) > 0 && (
-                    <p className="text-xs text-amber-600">Maximum stock reached</p>
-                  )}
-                </div>
+                
 
                 {/* Add to Cart Button */}
                 <Button
