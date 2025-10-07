@@ -4,6 +4,16 @@ This is a marketplace application called "rest-express" designed for connecting 
 
 ## Recent Changes
 
+**2025-10-07**: Database migration to Supabase and image storage migration to Cloudinary
+- Successfully migrated from Replit's built-in PostgreSQL database to Supabase
+- Database schema pushed to Supabase using Drizzle ORM (`npm run db:push`)
+- Integrated Cloudinary for cloud-based image storage and management
+- Updated product creation and update endpoints to automatically upload images to Cloudinary
+- Base64 images are now converted to secure Cloudinary URLs before storage
+- All test data re-seeded successfully in Supabase database
+- Environment variables configured: DATABASE_URL (Supabase), CLOUDINARY_URL
+- Application tested and verified working with both new services
+
 **2025-10-06**: User flow bug fixes
 - Fixed kayayo profile navigation - now correctly uses kayayo user ID instead of availability record ID
 - Added GET /api/orders/:id endpoint with proper role-based access control for fetching individual orders
@@ -73,8 +83,9 @@ The application is configured to run automatically. The workflow starts the deve
 
 ## Environment Variables
 
-The following environment variables are automatically configured by Replit:
-- `DATABASE_URL` - PostgreSQL connection string
+The following environment variables are configured in Replit Secrets:
+- `DATABASE_URL` - Supabase PostgreSQL connection string
+- `CLOUDINARY_URL` - Cloudinary cloud storage connection string (format: cloudinary://api_key:api_secret@cloud_name)
 - `SESSION_SECRET` - JWT secret for authentication
 - `PORT` - Server port (default: 5000)
 
@@ -96,11 +107,19 @@ The application follows a modern full-stack architecture with a React frontend a
 
 ## Database Layer
 
-**ORM and Database**: Drizzle ORM with PostgreSQL as the primary database, configured through Neon Database serverless connections for scalable cloud deployment.
+**ORM and Database**: Drizzle ORM with PostgreSQL as the primary database, hosted on Supabase for scalable cloud deployment with built-in authentication and real-time features.
 
 **Schema Design**: The database schema includes tables for users, sellers, products, cart items, orders, reviews, kayayo availability, and disputes. All tables use UUID primary keys for better distribution and security. The disputes table supports order-related dispute management with evidence tracking and resolution workflows.
 
-**Migrations**: Database schema changes are managed through Drizzle migrations with a dedicated configuration file.
+**Migrations**: Database schema changes are managed through Drizzle with `npm run db:push` command to sync schema changes to Supabase.
+
+## Image Storage
+
+**Cloud Storage**: Cloudinary integration for secure, scalable image storage and delivery with automatic optimization.
+
+**Image Upload Flow**: When products are created or updated, base64-encoded images are automatically uploaded to Cloudinary and stored as secure URLs in the database.
+
+**Organization**: All product images are stored in the `makola-connect/products` folder within Cloudinary for organized asset management.
 
 ## Authentication and Authorization
 
@@ -142,7 +161,9 @@ The application follows a modern full-stack architecture with a React frontend a
 
 # External Dependencies
 
-**Database Service**: Neon Database (@neondatabase/serverless) for PostgreSQL hosting with serverless scaling capabilities.
+**Database Service**: Supabase for PostgreSQL database hosting with serverless scaling, built-in authentication, and real-time capabilities.
+
+**Image Storage**: Cloudinary for cloud-based image storage, optimization, and delivery with automatic format conversion and responsive image generation.
 
 **UI Component Library**: Extensive use of Radix UI primitives for accessible, unstyled components that are then styled with custom CSS.
 
