@@ -520,8 +520,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       console.log(`Total amount calculated: ${totalAmount}`);
 
+      // Ensure buyerId is set from authenticated user, not from request body
+      const { buyerId, ...restOfBody } = req.body;
       const orderData = insertOrderSchema.parse({
-        ...req.body,
+        ...restOfBody,
         buyerId: req.user!.userId,
         totalAmount: totalAmount.toString()
       });
