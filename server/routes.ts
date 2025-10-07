@@ -303,6 +303,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch("/api/sellers/:id", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const sellerId = req.params.id;
+      
+      // Get the seller to verify ownership
+      const seller = await storage.getSeller(sellerId);
+      if (!seller) {
+        return res.status(404).json({ message: "Seller not found" });
+      }
+
+      // Ensure user can only update their own seller profile
+      if (req.user!.userId !== seller.userId) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      const updatedSeller = await storage.updateSeller(sellerId, req.body);
+      if (!updatedSeller) {
+        return res.status(404).json({ message: "Seller not found" });
+      }
+
+      res.json(updatedSeller);
+    } catch (error) {
+      console.error('Update seller error:', error);
+      res.status(500).json({ message: "Failed to update seller profile" });
+    }
+  });
+
   // Product routes
   app.get("/api/products", async (req, res) => {
     const { sellerId, category, search } = req.query;

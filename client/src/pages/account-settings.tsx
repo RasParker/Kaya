@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/lib/auth";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import MobileLayout from "@/components/layout/mobile-layout";
@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, User, Phone, Mail, Save } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ArrowLeft, User, Phone, Mail, Save, Store, Clock, Globe } from "lucide-react";
 
 export default function AccountSettings() {
   const [, setLocation] = useLocation();
@@ -20,17 +21,60 @@ export default function AccountSettings() {
   const [name, setName] = useState(user?.name || "");
   const [phone, setPhone] = useState(user?.phone || "");
   const [email, setEmail] = useState(user?.email || "");
+  
+  // Seller-specific fields
+  const [market, setMarket] = useState("Makola");
+  const [openingHours, setOpeningHours] = useState({ start: "06:00", end: "18:00" });
+  const [languages, setLanguages] = useState<string[]>([]);
+  const [languageInput, setLanguageInput] = useState("");
+
+  // Fetch seller profile if user is a seller
+  const { data: sellerProfile } = useQuery<any[]>({
+    queryKey: [`/api/sellers?userId=${user?.id}`],
+    enabled: !!user && user.userType === 'seller',
+  });
+
+  // Update state when seller profile is loaded
+  useEffect(() => {
+    if (sellerProfile && Array.isArray(sellerProfile) && sellerProfile.length > 0) {
+      const seller = sellerProfile[0];
+      setMarket(seller.market || "Makola");
+      setOpeningHours(seller.openingHours || { start: "06:00", end: "18:00" });
+      setLanguages(seller.languages || []);
+    }
+  }, [sellerProfile]);
 
   const updateProfileMutation = useMutation({
-    mutationFn: async (data: { name: string; phone?: string; email?: string }) => {
-      const response = await apiRequest("PATCH", `/api/users/${user?.id}`, data);
-      return response.json();
+    mutationFn: async (data: { name: string; phone?: string; email?: string; sellerData?: any }) => {
+      const response = await apiRequest("PATCH", `/api/users/${user?.id}`, {
+        name: data.name,
+        phone: data.phone,
+        email: data.email,
+      });
+      const updatedUser = await response.json();
+      
+      // Update seller profile if user is a seller and seller data is provided
+      if (user?.userType === 'seller' && data.sellerData && sellerProfile && Array.isArray(sellerProfile) && sellerProfile.length > 0) {
+        const seller = sellerProfile[0];
+        // Verify this seller belongs to the current user
+        if (seller.userId === user.id) {
+          const sellerResponse = await apiRequest("PATCH", `/api/sellers/${seller.id}`, data.sellerData);
+          await sellerResponse.json();
+        } else {
+          throw new Error('Unauthorized: Cannot update another seller\'s profile');
+        }
+      }
+      
+      return updatedUser;
     },
     onSuccess: (updatedUser) => {
       // Update local storage with new user data
       localStorage.setItem('auth_user', JSON.stringify(updatedUser));
       
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      if (user?.userType === 'seller') {
+        queryClient.invalidateQueries({ queryKey: [`/api/sellers?userId=${user.id}`] });
+      }
       toast({
         title: "Profile updated",
         description: "Your account settings have been saved successfully.",
@@ -60,11 +104,29 @@ export default function AccountSettings() {
       return;
     }
 
+    const sellerData = user?.userType === 'seller' ? {
+      market,
+      openingHours,
+      languages,
+    } : undefined;
+
     updateProfileMutation.mutate({
       name,
       phone: phone || undefined,
       email: email || undefined,
+      sellerData,
     });
+  };
+
+  const addLanguage = () => {
+    if (languageInput.trim() && !languages.includes(languageInput.trim())) {
+      setLanguages([...languages, languageInput.trim()]);
+      setLanguageInput("");
+    }
+  };
+
+  const removeLanguage = (lang: string) => {
+    setLanguages(languages.filter(l => l !== lang));
   };
 
   if (!user) {
@@ -147,6 +209,105 @@ export default function AccountSettings() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Seller-specific Information */}
+          {user.userType === 'seller' && (
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="text-lg">Seller Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Market */}
+                <div className="space-y-2">
+                  <Label htmlFor="market">
+                    <Store className="h-4 w-4 inline mr-2" />
+                    Market
+                  </Label>
+                  <Select value={market} onValueChange={setMarket}>
+                    <SelectTrigger data-testid="select-market">
+                      <SelectValue placeholder="Select market" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Makola">Makola</SelectItem>
+                      <SelectItem value="Kaneshie">Kaneshie</SelectItem>
+                      <SelectItem value="Madina">Madina</SelectItem>
+                      <SelectItem value="Dome">Dome</SelectItem>
+                      <SelectItem value="Ashaiman">Ashaiman</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Opening Hours */}
+                <div className="space-y-2">
+                  <Label>
+                    <Clock className="h-4 w-4 inline mr-2" />
+                    Opening Hours
+                  </Label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="start-time" className="text-xs text-muted-foreground">Start</Label>
+                      <Input
+                        id="start-time"
+                        type="time"
+                        value={openingHours.start}
+                        onChange={(e) => setOpeningHours({ ...openingHours, start: e.target.value })}
+                        data-testid="input-start-time"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="end-time" className="text-xs text-muted-foreground">End</Label>
+                      <Input
+                        id="end-time"
+                        type="time"
+                        value={openingHours.end}
+                        onChange={(e) => setOpeningHours({ ...openingHours, end: e.target.value })}
+                        data-testid="input-end-time"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Languages */}
+                <div className="space-y-2">
+                  <Label htmlFor="languages">
+                    <Globe className="h-4 w-4 inline mr-2" />
+                    Languages
+                  </Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="languages"
+                      type="text"
+                      value={languageInput}
+                      onChange={(e) => setLanguageInput(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addLanguage())}
+                      placeholder="Add a language"
+                      data-testid="input-language"
+                    />
+                    <Button type="button" onClick={addLanguage} variant="outline" data-testid="button-add-language">
+                      Add
+                    </Button>
+                  </div>
+                  {languages.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {languages.map((lang) => (
+                        <div key={lang} className="bg-primary/10 text-primary px-3 py-1 rounded-full flex items-center gap-2">
+                          <span className="text-sm">{lang}</span>
+                          <button
+                            type="button"
+                            onClick={() => removeLanguage(lang)}
+                            className="text-primary hover:text-primary/80"
+                            data-testid={`button-remove-${lang}`}
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Account Type Info */}
           <Card className="mb-6">
