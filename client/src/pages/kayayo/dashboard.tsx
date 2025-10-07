@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { 
   MapPin, 
@@ -23,7 +22,6 @@ import {
   Wallet,
   TrendingUp,
   Route,
-  Eye,
   User
 } from "lucide-react";
 import type { Order } from "@shared/schema";
@@ -33,7 +31,6 @@ export default function KayayoDashboard() {
   const { user } = useAuth();
   const { lastMessage } = useWebSocket();
   const { toast } = useToast();
-  const [previewOrder, setPreviewOrder] = useState<Order | null>(null);
 
   const { data: availability, refetch: refetchAvailability } = useQuery({
     queryKey: ["/api/kayayos", user?.id, "availability"],
@@ -234,7 +231,6 @@ export default function KayayoDashboard() {
             <CardContent>
               <AvailableOrdersList 
                 onAccept={(orderId: string) => acceptOrderMutation.mutate(orderId)}
-                onPreview={(order: Order) => setPreviewOrder(order)}
               />
             </CardContent>
           </Card>
@@ -286,58 +282,6 @@ export default function KayayoDashboard() {
           </CardContent>
         </Card>
       </main>
-
-      {/* Quick Preview Dialog */}
-      <Dialog open={!!previewOrder} onOpenChange={() => setPreviewOrder(null)}>
-        <DialogContent className="max-w-md">
-          {previewOrder && (
-            <>
-              <DialogHeader>
-                <DialogTitle>Order #{previewOrder.id.slice(0, 8)}</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-xs text-muted-foreground">Kayayo Fee</p>
-                    <p className="text-lg font-bold text-primary">₵{parseFloat(previewOrder.kayayoFee || "0").toFixed(2)}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Total Amount</p>
-                    <p className="text-lg font-semibold">₵{parseFloat(previewOrder.totalAmount || "0").toFixed(2)}</p>
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <MapPin className="h-4 w-4 text-muted-foreground" />
-                    <p className="text-xs text-muted-foreground">Delivery Address</p>
-                  </div>
-                  <p className="text-sm">{previewOrder.deliveryAddress}</p>
-                </div>
-
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <User className="h-4 w-4 text-muted-foreground" />
-                    <p className="text-xs text-muted-foreground">Payment Method</p>
-                  </div>
-                  <Badge>{previewOrder.paymentMethod || 'Cash'}</Badge>
-                </div>
-
-                <Button 
-                  className="w-full"
-                  onClick={() => {
-                    acceptOrderMutation.mutate(previewOrder.id);
-                    setPreviewOrder(null);
-                  }}
-                  data-testid="button-accept-from-preview"
-                >
-                  Accept Order
-                </Button>
-              </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
     </MobileLayout>
   );
 }
@@ -385,7 +329,7 @@ function ActiveOrderCard({ order }: { order: Order }) {
   );
 }
 
-function AvailableOrdersList({ onAccept, onPreview }: { onAccept: (orderId: string) => void; onPreview: (order: Order) => void }) {
+function AvailableOrdersList({ onAccept }: { onAccept: (orderId: string) => void }) {
   const { data: pendingOrders = [] } = useQuery<Order[]>({
     queryKey: ["/api/orders/pending"],
     refetchInterval: 5000, // Refresh every 5 seconds for real-time updates
@@ -408,14 +352,13 @@ function AvailableOrdersList({ onAccept, onPreview }: { onAccept: (orderId: stri
           key={order.id}
           order={order}
           onAccept={onAccept}
-          onPreview={() => onPreview(order)}
         />
       ))}
     </div>
   );
 }
 
-function TimedOrderCard({ order, onAccept, onPreview }: { order: Order; onAccept: (orderId: string) => void; onPreview: () => void }) {
+function TimedOrderCard({ order, onAccept }: { order: Order; onAccept: (orderId: string) => void }) {
   // Calculate time remaining (5 minutes from creation)
   const createdAt = order.createdAt ? new Date(order.createdAt) : new Date();
   const now = new Date();
@@ -458,18 +401,20 @@ function TimedOrderCard({ order, onAccept, onPreview }: { order: Order; onAccept
         </div>
       </div>
       
-      <div className="space-y-1 text-sm mb-3">
-        <div className="flex items-center gap-2">
-          <MapPin className="h-3 w-3 text-muted-foreground" />
-          <span className="text-muted-foreground truncate">Deliver to: {order.deliveryAddress}</span>
+      <div className="space-y-2 text-sm mb-3 bg-gray-50 dark:bg-gray-900 p-2 rounded">
+        <div className="flex items-start gap-2">
+          <MapPin className="h-3 w-3 text-muted-foreground mt-0.5 flex-shrink-0" />
+          <span className="text-muted-foreground text-xs">{order.deliveryAddress}</span>
         </div>
-        <div className="flex items-center gap-2">
-          <Package className="h-3 w-3 text-muted-foreground" />
-          <span className="text-muted-foreground">Total: ₵{parseFloat(order.totalAmount || "0").toFixed(2)}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <User className="h-3 w-3 text-muted-foreground" />
-          <span className="text-muted-foreground">Payment: {order.paymentMethod || 'Cash'}</span>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Package className="h-3 w-3 text-muted-foreground" />
+            <span className="text-muted-foreground text-xs">Total: ₵{parseFloat(order.totalAmount || "0").toFixed(2)}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <User className="h-3 w-3 text-muted-foreground" />
+            <span className="text-muted-foreground text-xs">{order.paymentMethod || 'Cash'}</span>
+          </div>
         </div>
       </div>
       
@@ -478,27 +423,16 @@ function TimedOrderCard({ order, onAccept, onPreview }: { order: Order; onAccept
           <p className="text-xs text-red-600 font-medium">⏰ Order expired - no longer available</p>
         </div>
       ) : (
-        <div className="flex gap-2">
-          <Button 
-            size="sm" 
-            className={`flex-1 ${
-              isUrgent ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700'
-            }`}
-            onClick={() => onAccept(order.id)}
-            data-testid={`button-accept-${order.id}`}
-          >
-            {isUrgent ? '⚡ Accept NOW' : 'Accept Order'}
-          </Button>
-          <Button 
-            size="sm" 
-            variant="outline"
-            className="px-3"
-            onClick={onPreview}
-            data-testid={`button-preview-${order.id}`}
-          >
-            <Eye className="h-4 w-4" />
-          </Button>
-        </div>
+        <Button 
+          size="sm" 
+          className={`w-full ${
+            isUrgent ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700'
+          }`}
+          onClick={() => onAccept(order.id)}
+          data-testid={`button-accept-${order.id}`}
+        >
+          {isUrgent ? '⚡ Accept NOW' : 'Accept Order'}
+        </Button>
       )}
     </div>
   );
