@@ -22,7 +22,7 @@ import { randomUUID } from "crypto";
 import bcrypt from "bcrypt";
 import { drizzle } from 'drizzle-orm/node-postgres';
 import pg from 'pg';
-import { eq, like, and } from 'drizzle-orm';
+import { eq, like, and, asc, desc } from 'drizzle-orm';
 import * as schema from '@shared/schema';
 
 const { Pool } = pg;
@@ -207,7 +207,7 @@ export class PostgresStorage implements IStorage {
 
   // Cart
   async getCartItems(buyerId: string): Promise<CartItem[]> {
-    return await this.db.select().from(schema.cartItems).where(eq(schema.cartItems.buyerId, buyerId));
+    return await this.db.select().from(schema.cartItems).where(eq(schema.cartItems.buyerId, buyerId)).orderBy(asc(schema.cartItems.id));
   }
 
   async addToCart(insertCartItem: InsertCartItem): Promise<CartItem> {
