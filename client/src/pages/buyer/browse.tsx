@@ -260,9 +260,6 @@ export default function Browse() {
                           {sellerInfo.stallName}
                         </span>
                       </div>
-                      <p className="text-xs text-muted-foreground mt-1" data-testid="modal-seller-location">
-                        {sellerInfo.stallLocation}, {sellerInfo.market}
-                      </p>
                     </div>
                   )}
 
