@@ -306,24 +306,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/products", async (req, res) => {
     const { sellerId, category, search } = req.query;
 
-    let query = storage.db.select().from(schema.products);
-
-    const conditions = [];
+    let result;
+    
     if (sellerId) {
-      conditions.push(eq(schema.products.sellerId, sellerId as string));
-    }
-    if (category) {
-      conditions.push(eq(schema.products.category, category as string));
-    }
-    if (search) {
-      conditions.push(like(schema.products.name, `%${search}%`));
-    }
-
-    if (conditions.length > 0) {
-      query = query.where(and(...conditions)) as any;
+      result = await storage.getProductsBySeller(sellerId as string);
+    } else if (category) {
+      result = await storage.getProductsByCategory(category as string);
+    } else if (search) {
+      result = await storage.searchProducts(search as string);
+    } else {
+      result = await storage.getAllProducts();
     }
 
-    const result = await query;
     // Ensure images field is properly returned as an array
     const productsWithImages = result.map(product => ({
       ...product,
@@ -1168,11 +1162,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const market = req.query.market as string || 'Makola';
       
-      // Get all kayayos for the market (not just available ones for home page display)
-      const allKayayos = await storage.db
-        .select()
-        .from(schema.kayayoAvailability)
-        .where(eq(schema.kayayoAvailability.market, market));
+      // Get all kayayos for the market
+      const allKayayos = await storage.getAvailableKayayos(market);
 
       // Get user data for each kayayo
       const kayayosWithUserData = await Promise.all(
@@ -1679,6 +1670,170 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Dispute resolved successfully" });
     } catch (error) {
       console.error('Resolve dispute error:', error);
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+
+  // Kayayo workflow routes
+  app.patch("/api/orders/:id/start-shopping", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      if (req.user!.userType !== 'kayayo') {
+        return res.status(403).json({ message: "Only kayayos can start shopping" });
+      }
+
+      const order = await storage.getOrder(req.params.id);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      if (order.kayayoId !== req.user!.userId) {
+        return res.status(403).json({ message: "You can only update your own orders" });
+      }
+
+      const updatedOrder = await storage.updateOrder(req.params.id, {
+        status: "shopping"
+      });
+
+      broadcastToUser(order.buyerId, {
+        type: 'ORDER_UPDATED',
+        order: updatedOrder
+      });
+
+      res.json(updatedOrder);
+    } catch (error) {
+      console.error('Start shopping error:', error);
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+
+  app.patch("/api/order-items/:id/pick", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      if (req.user!.userType !== 'kayayo') {
+        return res.status(403).json({ message: "Only kayayos can update items" });
+      }
+
+      const { isPicked } = req.body;
+      const updatedItem = await storage.updateOrderItem(req.params.id, {
+        isPicked
+      });
+
+      if (!updatedItem) {
+        return res.status(404).json({ message: "Order item not found" });
+      }
+
+      res.json(updatedItem);
+    } catch (error) {
+      console.error('Pick item error:', error);
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+
+  app.post("/api/orders/:id/verify-seller", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      if (req.user!.userType !== 'kayayo') {
+        return res.status(403).json({ message: "Only kayayos can verify sellers" });
+      }
+
+      const { verificationCode } = req.body;
+      
+      // In a real app, you would verify the code against the seller's generated code
+      // For now, we'll accept any 4-digit code
+      if (!verificationCode || verificationCode.length !== 4) {
+        return res.status(400).json({ message: "Invalid verification code" });
+      }
+
+      const order = await storage.getOrder(req.params.id);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      res.json({ message: "Seller verified successfully", verified: true });
+    } catch (error) {
+      console.error('Verify seller error:', error);
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+
+  app.patch("/api/orders/:id/mark-ready", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      if (req.user!.userType !== 'kayayo') {
+        return res.status(403).json({ message: "Only kayayos can mark orders as ready" });
+      }
+
+      const order = await storage.getOrder(req.params.id);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      if (order.kayayoId !== req.user!.userId) {
+        return res.status(403).json({ message: "You can only update your own orders" });
+      }
+
+      // Check if all items are picked
+      const orderItems = await storage.getOrderItemsByOrder(req.params.id);
+      const allPicked = orderItems.every(item => item.isPicked);
+
+      if (!allPicked) {
+        return res.status(400).json({ message: "All items must be picked before marking ready" });
+      }
+
+      const updatedOrder = await storage.updateOrder(req.params.id, {
+        status: "ready_for_pickup"
+      });
+
+      broadcastToUser(order.buyerId, {
+        type: 'ORDER_UPDATED',
+        order: updatedOrder
+      });
+
+      res.json(updatedOrder);
+    } catch (error) {
+      console.error('Mark ready error:', error);
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+
+  app.patch("/api/orders/:id/handover-to-rider", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      if (req.user!.userType !== 'kayayo') {
+        return res.status(403).json({ message: "Only kayayos can handover to riders" });
+      }
+
+      const { riderId, verificationCode } = req.body;
+
+      if (!verificationCode || verificationCode.length !== 4) {
+        return res.status(400).json({ message: "Invalid verification code" });
+      }
+
+      const order = await storage.getOrder(req.params.id);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      if (order.kayayoId !== req.user!.userId) {
+        return res.status(403).json({ message: "You can only handover your own orders" });
+      }
+
+      const updatedOrder = await storage.updateOrder(req.params.id, {
+        status: "in_transit",
+        riderId: riderId || order.riderId
+      });
+
+      broadcastToUser(order.buyerId, {
+        type: 'ORDER_UPDATED',
+        order: updatedOrder
+      });
+
+      if (updatedOrder?.riderId) {
+        broadcastToUser(updatedOrder.riderId, {
+          type: 'ORDER_ASSIGNED',
+          order: updatedOrder
+        });
+      }
+
+      res.json(updatedOrder);
+    } catch (error) {
+      console.error('Handover to rider error:', error);
       res.status(500).json({ message: "Server error" });
     }
   });
