@@ -8,6 +8,7 @@ import * as schema from "@shared/schema";
 import { eq, like, and } from "drizzle-orm";
 import jwt from "jsonwebtoken";
 import { OrderStateMachine, OrderStatus, OrderStateError } from "./orderStateMachine";
+import { uploadImageToCloudinary, uploadMultipleImagesToCloudinary } from "./cloudinary";
 
 interface AuthenticatedRequest extends Request {
   user?: any;
@@ -331,6 +332,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Product creation request:", JSON.stringify(req.body));
       const productData = insertProductSchema.parse(req.body);
       console.log("Parsed product data:", productData);
+      
+      if (productData.image && productData.image.startsWith('data:')) {
+        console.log("Uploading main image to Cloudinary...");
+        productData.image = await uploadImageToCloudinary(productData.image, 'makola-connect/products');
+      }
+      
+      if (productData.images && Array.isArray(productData.images) && productData.images.length > 0) {
+        const base64Images = productData.images.filter((img: string) => img.startsWith('data:'));
+        if (base64Images.length > 0) {
+          console.log(`Uploading ${base64Images.length} additional images to Cloudinary...`);
+          const cloudinaryUrls = await uploadMultipleImagesToCloudinary(base64Images, 'makola-connect/products');
+          const nonBase64Images = productData.images.filter((img: string) => !img.startsWith('data:'));
+          productData.images = [...cloudinaryUrls, ...nonBase64Images];
+        }
+      }
+      
       const product = await storage.createProduct(productData);
       console.log("Product created successfully:", product.id);
       res.json(product);
@@ -350,7 +367,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/products/:id", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
-      const product = await storage.updateProduct(req.params.id, req.body);
+      const updateData = { ...req.body };
+      
+      if (updateData.image && updateData.image.startsWith('data:')) {
+        console.log("Uploading main image to Cloudinary...");
+        updateData.image = await uploadImageToCloudinary(updateData.image, 'makola-connect/products');
+      }
+      
+      if (updateData.images && Array.isArray(updateData.images) && updateData.images.length > 0) {
+        const base64Images = updateData.images.filter((img: string) => img.startsWith('data:'));
+        if (base64Images.length > 0) {
+          console.log(`Uploading ${base64Images.length} additional images to Cloudinary...`);
+          const cloudinaryUrls = await uploadMultipleImagesToCloudinary(base64Images, 'makola-connect/products');
+          const nonBase64Images = updateData.images.filter((img: string) => !img.startsWith('data:'));
+          updateData.images = [...cloudinaryUrls, ...nonBase64Images];
+        }
+      }
+      
+      const product = await storage.updateProduct(req.params.id, updateData);
       if (!product) {
         return res.status(404).json({ message: "Product not found" });
       }
