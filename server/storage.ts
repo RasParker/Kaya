@@ -16,7 +16,9 @@ import {
   type KayayoAvailability,
   type InsertKayayoAvailability,
   type Dispute,
-  type InsertDispute
+  type InsertDispute,
+  type DeliveryAddress,
+  type InsertDeliveryAddress
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import bcrypt from "bcrypt";
@@ -96,6 +98,14 @@ export interface IStorage {
   getAllDisputes(): Promise<Dispute[]>;
   getDisputesByOrder(orderId: string): Promise<Dispute[]>;
   getDisputesByStatus(status: string): Promise<Dispute[]>;
+
+  // Delivery Addresses
+  getDeliveryAddress(id: string): Promise<DeliveryAddress | undefined>;
+  getDeliveryAddressesByUser(userId: string): Promise<DeliveryAddress[]>;
+  createDeliveryAddress(address: InsertDeliveryAddress): Promise<DeliveryAddress>;
+  updateDeliveryAddress(id: string, address: Partial<DeliveryAddress>): Promise<DeliveryAddress | undefined>;
+  deleteDeliveryAddress(id: string): Promise<boolean>;
+  setDefaultAddress(userId: string, addressId: string): Promise<void>;
 }
 
 
@@ -384,6 +394,36 @@ export class PostgresStorage implements IStorage {
 
   async getDisputesByStatus(status: string): Promise<Dispute[]> {
     return await this.db.select().from(schema.disputes).where(eq(schema.disputes.status, status));
+  }
+
+  // Delivery Addresses
+  async getDeliveryAddress(id: string): Promise<DeliveryAddress | undefined> {
+    const result = await this.db.select().from(schema.deliveryAddresses).where(eq(schema.deliveryAddresses.id, id)).limit(1);
+    return result[0];
+  }
+
+  async getDeliveryAddressesByUser(userId: string): Promise<DeliveryAddress[]> {
+    return await this.db.select().from(schema.deliveryAddresses).where(eq(schema.deliveryAddresses.userId, userId)).orderBy(desc(schema.deliveryAddresses.isDefault));
+  }
+
+  async createDeliveryAddress(insertAddress: InsertDeliveryAddress): Promise<DeliveryAddress> {
+    const result = await this.db.insert(schema.deliveryAddresses).values(insertAddress).returning();
+    return result[0];
+  }
+
+  async updateDeliveryAddress(id: string, addressUpdate: Partial<DeliveryAddress>): Promise<DeliveryAddress | undefined> {
+    const result = await this.db.update(schema.deliveryAddresses).set(addressUpdate).where(eq(schema.deliveryAddresses.id, id)).returning();
+    return result[0];
+  }
+
+  async deleteDeliveryAddress(id: string): Promise<boolean> {
+    const result = await this.db.delete(schema.deliveryAddresses).where(eq(schema.deliveryAddresses.id, id)).returning();
+    return result.length > 0;
+  }
+
+  async setDefaultAddress(userId: string, addressId: string): Promise<void> {
+    await this.db.update(schema.deliveryAddresses).set({ isDefault: false }).where(eq(schema.deliveryAddresses.userId, userId));
+    await this.db.update(schema.deliveryAddresses).set({ isDefault: true }).where(eq(schema.deliveryAddresses.id, addressId));
   }
 }
 

@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import bcrypt from "bcrypt";
 import { storage } from "./storage";
-import { insertUserSchema, insertProductSchema, insertCartItemSchema, insertOrderSchema } from "@shared/schema";
+import { insertUserSchema, insertProductSchema, insertCartItemSchema, insertOrderSchema, insertDeliveryAddressSchema } from "@shared/schema";
 import * as schema from "@shared/schema";
 import { eq, like, and } from "drizzle-orm";
 import jwt from "jsonwebtoken";
@@ -484,6 +484,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!success) {
         return res.status(404).json({ message: "Cart item not found" });
       }
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+
+  // Delivery Addresses routes
+  app.get("/api/delivery-addresses", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const addresses = await storage.getDeliveryAddressesByUser(req.user!.userId);
+      res.json(addresses);
+    } catch (error) {
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+
+  app.post("/api/delivery-addresses", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const addressData = insertDeliveryAddressSchema.parse({
+        ...req.body,
+        userId: req.user!.userId
+      });
+      const address = await storage.createDeliveryAddress(addressData);
+      res.json(address);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid address data" });
+    }
+  });
+
+  app.patch("/api/delivery-addresses/:id", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const existingAddress = await storage.getDeliveryAddress(req.params.id);
+      if (!existingAddress || existingAddress.userId !== req.user!.userId) {
+        return res.status(404).json({ message: "Address not found" });
+      }
+      
+      const { userId, id, createdAt, ...allowedUpdates } = req.body;
+      const address = await storage.updateDeliveryAddress(req.params.id, allowedUpdates);
+      res.json(address);
+    } catch (error) {
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+
+  app.delete("/api/delivery-addresses/:id", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const existingAddress = await storage.getDeliveryAddress(req.params.id);
+      if (!existingAddress || existingAddress.userId !== req.user!.userId) {
+        return res.status(404).json({ message: "Address not found" });
+      }
+      
+      const success = await storage.deleteDeliveryAddress(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+
+  app.post("/api/delivery-addresses/:id/set-default", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const existingAddress = await storage.getDeliveryAddress(req.params.id);
+      if (!existingAddress || existingAddress.userId !== req.user!.userId) {
+        return res.status(404).json({ message: "Address not found" });
+      }
+      
+      await storage.setDefaultAddress(req.user!.userId, req.params.id);
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ message: "Server error" });

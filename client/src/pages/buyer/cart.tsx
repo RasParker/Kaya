@@ -15,8 +15,10 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import LoadingSpinner from "@/components/ui/loading-spinner";
 import { Skeleton, SkeletonCard } from "@/components/ui/skeleton";
-import { ArrowLeft, Minus, Plus, Trash2, ShoppingBag, MapPin, Clock, Star, User } from "lucide-react";
-import type { CartItem, Product, Seller, User as UserType, InsertOrder } from "@shared/schema";
+import { ArrowLeft, Minus, Plus, Trash2, ShoppingBag, MapPin, Clock, Star, User, PlusCircle } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import type { CartItem, Product, Seller, User as UserType, InsertOrder, DeliveryAddress } from "@shared/schema";
 
 type CartItemWithProduct = CartItem & { product: Product };
 type SellerWithUser = Seller & { user: UserType };
@@ -26,13 +28,22 @@ export default function Cart() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
   const { toast } = useToast();
-  const [deliveryAddress, setDeliveryAddress] = useState("123 Main Street, Accra");
+  const [selectedAddressId, setSelectedAddressId] = useState<string>("");
+  const [customAddress, setCustomAddress] = useState("");
   const [allowSubstitutions, setAllowSubstitutions] = useState(true);
   const [selectedKayayo, setSelectedKayayo] = useState<string | null>(null);
   const [updatingItemId, setUpdatingItemId] = useState<string | null>(null);
+  const [isAddAddressOpen, setIsAddAddressOpen] = useState(false);
+  const [newAddressLabel, setNewAddressLabel] = useState("Home");
+  const [newAddressText, setNewAddressText] = useState("");
   
   const { data: cartItems = [], isLoading } = useQuery<CartItemWithProduct[]>({
     queryKey: ["/api/cart"],
+    enabled: !!user,
+  });
+
+  const { data: savedAddresses = [] } = useQuery<DeliveryAddress[]>({
+    queryKey: ["/api/delivery-addresses"],
     enabled: !!user,
   });
 
@@ -70,6 +81,23 @@ export default function Cart() {
     },
   });
 
+  const createAddressMutation = useMutation({
+    mutationFn: async (data: { label: string; address: string; isDefault: boolean }) => {
+      const response = await apiRequest("POST", "/api/delivery-addresses", data);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/delivery-addresses"] });
+      setIsAddAddressOpen(false);
+      setNewAddressLabel("Home");
+      setNewAddressText("");
+      toast({
+        title: "Address saved",
+        description: "Your delivery address has been saved successfully.",
+      });
+    },
+  });
+
   // Remove createOrderMutation since we now navigate to payment page
 
   const calculateTotal = () => {
@@ -95,7 +123,17 @@ export default function Cart() {
     updateCartMutation.mutate({ itemId, updates: { allowSubstitution } });
   };
 
+  const getDeliveryAddress = () => {
+    if (selectedAddressId && selectedAddressId !== "custom") {
+      const selected = savedAddresses.find(addr => addr.id === selectedAddressId);
+      return selected?.address || "";
+    }
+    return customAddress;
+  };
+
   const handleCheckout = () => {
+    const deliveryAddress = getDeliveryAddress();
+    
     if (cartItems.length === 0 || !selectedKayayo || !deliveryAddress.trim()) {
       toast({
         title: "Cannot proceed",
@@ -262,35 +300,122 @@ export default function Cart() {
             {/* Delivery Address */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <MapPin className="h-5 w-5" />
-                  Delivery Address
+                <CardTitle className="text-lg flex items-center gap-2 justify-between">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-5 w-5" />
+                    Delivery Address
+                  </div>
+                  <Dialog open={isAddAddressOpen} onOpenChange={setIsAddAddressOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="sm" data-testid="button-add-address">
+                        <PlusCircle className="h-4 w-4 mr-1" />
+                        Add New
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Add Delivery Address</DialogTitle>
+                        <DialogDescription>
+                          Save a new delivery address for faster checkout
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="label">Label</Label>
+                          <Select value={newAddressLabel} onValueChange={setNewAddressLabel}>
+                            <SelectTrigger id="label" data-testid="select-address-label">
+                              <SelectValue placeholder="Select label" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Home">Home</SelectItem>
+                              <SelectItem value="Work">Work</SelectItem>
+                              <SelectItem value="Other">Other</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="address">Address</Label>
+                          <Input
+                            id="address"
+                            value={newAddressText}
+                            onChange={(e) => setNewAddressText(e.target.value)}
+                            placeholder="Enter full address"
+                            data-testid="input-new-address"
+                          />
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button
+                          onClick={() => {
+                            if (newAddressText.trim()) {
+                              createAddressMutation.mutate({
+                                label: newAddressLabel,
+                                address: newAddressText.trim(),
+                                isDefault: savedAddresses.length === 0
+                              });
+                            }
+                          }}
+                          disabled={!newAddressText.trim() || createAddressMutation.isPending}
+                          data-testid="button-save-address"
+                        >
+                          {createAddressMutation.isPending ? "Saving..." : "Save Address"}
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <Input
-                  value={deliveryAddress}
-                  onChange={(e) => setDeliveryAddress(e.target.value)}
-                  placeholder="Enter your delivery address"
-                  className="mb-3"
-                  data-testid="input-delivery-address"
-                />
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="substitutions"
-                    checked={allowSubstitutions}
-                    onCheckedChange={(checked) => {
-                      const newValue = checked as boolean;
-                      setAllowSubstitutions(newValue);
-                      // Apply to all cart items
-                      cartItems.forEach(item => {
-                        handleSubstitutionToggle(item.id, newValue);
-                      });
-                    }}
-                  />
-                  <Label htmlFor="substitutions" className="text-sm">
-                    Allow substitutions for all items if unavailable
-                  </Label>
+                <div className="space-y-3">
+                  {savedAddresses.length > 0 ? (
+                    <>
+                      <Select value={selectedAddressId} onValueChange={setSelectedAddressId}>
+                        <SelectTrigger data-testid="select-delivery-address">
+                          <SelectValue placeholder="Select a saved address" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {savedAddresses.map((addr) => (
+                            <SelectItem key={addr.id} value={addr.id}>
+                              {addr.label}: {addr.address}
+                            </SelectItem>
+                          ))}
+                          <SelectItem value="custom">Enter custom address</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {selectedAddressId === "custom" && (
+                        <Input
+                          value={customAddress}
+                          onChange={(e) => setCustomAddress(e.target.value)}
+                          placeholder="Enter your delivery address"
+                          data-testid="input-custom-address"
+                        />
+                      )}
+                    </>
+                  ) : (
+                    <Input
+                      value={customAddress}
+                      onChange={(e) => setCustomAddress(e.target.value)}
+                      placeholder="Enter your delivery address"
+                      data-testid="input-delivery-address"
+                    />
+                  )}
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="substitutions"
+                      checked={allowSubstitutions}
+                      onCheckedChange={(checked) => {
+                        const newValue = checked as boolean;
+                        setAllowSubstitutions(newValue);
+                        // Apply to all cart items
+                        cartItems.forEach(item => {
+                          handleSubstitutionToggle(item.id, newValue);
+                        });
+                      }}
+                    />
+                    <Label htmlFor="substitutions" className="text-sm">
+                      Allow substitutions for all items if unavailable
+                    </Label>
+                  </div>
                 </div>
               </CardContent>
             </Card>

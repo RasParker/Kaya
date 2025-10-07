@@ -136,6 +136,16 @@ export const disputes = pgTable("disputes", {
   resolvedAt: timestamp("resolved_at"),
 });
 
+// Delivery Addresses
+export const deliveryAddresses = pgTable("delivery_addresses", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  label: text("label").notNull(), // 'Home', 'Work', 'Other', etc.
+  address: text("address").notNull(),
+  isDefault: boolean("is_default").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Create insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -182,6 +192,11 @@ export const insertDisputeSchema = createInsertSchema(disputes).omit({
   resolvedAt: true,
 });
 
+export const insertDeliveryAddressSchema = createInsertSchema(deliveryAddresses).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -209,3 +224,6 @@ export type KayayoAvailability = typeof kayayoAvailability.$inferSelect;
 
 export type InsertDispute = z.infer<typeof insertDisputeSchema>;
 export type Dispute = typeof disputes.$inferSelect;
+
+export type InsertDeliveryAddress = z.infer<typeof insertDeliveryAddressSchema>;
+export type DeliveryAddress = typeof deliveryAddresses.$inferSelect;
