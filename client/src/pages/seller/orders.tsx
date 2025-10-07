@@ -28,7 +28,13 @@ export default function SellerOrders() {
 
   const confirmOrderMutation = useMutation({
     mutationFn: async (orderId: string) => {
-      const response = await apiRequest("PATCH", `/api/orders/${orderId}/seller-confirm`, {});
+      const response = await apiRequest("PATCH", `/api/orders/${orderId}/seller-confirm`, {
+        status: "accepted"
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to accept order');
+      }
       return response.json();
     },
     onSuccess: () => {
@@ -37,6 +43,13 @@ export default function SellerOrders() {
       toast({
         title: "Order accepted",
         description: "Order has been accepted and is ready for Kayayo assignment.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to accept order",
+        description: error.message || "An error occurred",
+        variant: "destructive",
       });
     },
   });
