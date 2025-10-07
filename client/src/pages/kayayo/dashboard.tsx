@@ -345,6 +345,12 @@ export default function KayayoDashboard() {
 function ActiveOrderCard({ order }: { order: Order }) {
   const [, setLocation] = useLocation();
   
+  const getStatusLabel = (status: string) => {
+    if (status === 'kayayo_accepted') return 'Accepted';
+    if (status === 'shopping') return 'Shopping';
+    return status.replace('_', ' ');
+  };
+  
   return (
     <div 
       className="border rounded-lg p-3 bg-blue-50 border-blue-200"
@@ -353,7 +359,7 @@ function ActiveOrderCard({ order }: { order: Order }) {
       <div className="flex items-center justify-between mb-2">
         <h3 className="font-semibold text-sm">Order #{order.id.slice(0, 8)}</h3>
         <Badge className="bg-blue-100 text-blue-800">
-          {order.status === 'kayayo_accepted' ? 'Shopping' : order.status}
+          {getStatusLabel(order.status)}
         </Badge>
       </div>
       <div className="space-y-1 text-sm mb-3">
