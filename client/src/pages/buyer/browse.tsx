@@ -377,12 +377,8 @@ function ProductCard({
           {product.name}
         </h3>
 
-        <p className="text-xs text-muted-foreground mb-1" data-testid={`text-product-unit-${product.id}`}>
+        <p className="text-xs text-muted-foreground mb-3" data-testid={`text-product-unit-${product.id}`}>
           {product.unit}
-        </p>
-
-        <p className="text-xs text-muted-foreground mb-2" data-testid={`text-product-stock-${product.id}`}>
-          Stock: {product.stockQty ?? 0}
         </p>
 
         <div className="flex items-center justify-between mb-3">
