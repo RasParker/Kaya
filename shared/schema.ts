@@ -48,6 +48,7 @@ export const products = pgTable("products", {
   isAvailable: boolean("is_available").default(true),
   allowSubstitution: boolean("allow_substitution").default(true),
   description: text("description"),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 // Cart items
@@ -160,6 +161,7 @@ export const insertSellerSchema = createInsertSchema(sellers).omit({
 
 export const insertProductSchema = createInsertSchema(products).omit({
   id: true,
+  createdAt: true,
 });
 
 export const insertCartItemSchema = createInsertSchema(cartItems).omit({

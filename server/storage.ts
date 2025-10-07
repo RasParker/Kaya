@@ -185,7 +185,7 @@ export class PostgresStorage implements IStorage {
   }
 
   async getAllProducts(): Promise<Product[]> {
-    return await this.db.select().from(schema.products);
+    return await this.db.select().from(schema.products).orderBy(desc(schema.products.createdAt));
   }
 
   async createProduct(insertProduct: InsertProduct): Promise<Product> {
@@ -204,15 +204,15 @@ export class PostgresStorage implements IStorage {
   }
 
   async getProductsBySeller(sellerId: string): Promise<Product[]> {
-    return await this.db.select().from(schema.products).where(eq(schema.products.sellerId, sellerId));
+    return await this.db.select().from(schema.products).where(eq(schema.products.sellerId, sellerId)).orderBy(desc(schema.products.createdAt));
   }
 
   async getProductsByCategory(category: string): Promise<Product[]> {
-    return await this.db.select().from(schema.products).where(eq(schema.products.category, category));
+    return await this.db.select().from(schema.products).where(eq(schema.products.category, category)).orderBy(desc(schema.products.createdAt));
   }
 
   async searchProducts(query: string): Promise<Product[]> {
-    return await this.db.select().from(schema.products).where(like(schema.products.name, `%${query}%`));
+    return await this.db.select().from(schema.products).where(like(schema.products.name, `%${query}%`)).orderBy(desc(schema.products.createdAt));
   }
 
   // Cart
