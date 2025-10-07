@@ -847,6 +847,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get orders that are seller_confirmed but don't have kayayo assigned yet
+
+
+  // Seller confirms/accepts an order
+  app.patch("/api/orders/:id/seller-confirm", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      // Only sellers can confirm orders
+      if (req.user!.userType !== 'seller') {
+        return res.status(403).json({ message: "Only sellers can confirm orders" });
+      }
+
+      const order = await storage.getOrder(req.params.id);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      // Get seller profile to verify this seller has items in this order
+      const sellerProfile = await storage.getSellerByUserId(req.user!.userId);
+      if (!sellerProfile) {
+        return res.status(404).json({ message: "Seller profile not found" });
+      }
+
+      const orderItems = await storage.getOrderItemsByOrder(req.params.id);
+      const hasSellerItems = orderItems.some(item => item.sellerId === sellerProfile.id);
+      
+      if (!hasSellerItems) {
+        return res.status(403).json({ message: "You don't have items in this order" });
+      }
+
+      const updatedOrder = await storage.updateOrder(req.params.id, {
+        status: "accepted"
+      });
+
+      if (!updatedOrder) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      // Broadcast to buyer
+      broadcastToUser(updatedOrder.buyerId, {
+        type: 'ORDER_ACCEPTED',
+        order: updatedOrder
+      });
+
+      res.json(updatedOrder);
+    } catch (error) {
+      console.error("Seller confirm order error:", error);
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+
       const orders = Array.from((storage as any).orders.values()).filter((order: any) => 
         order.status === OrderStatus.SELLER_CONFIRMED && !order.kayayoId
       );

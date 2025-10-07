@@ -28,9 +28,7 @@ export default function SellerOrders() {
 
   const confirmOrderMutation = useMutation({
     mutationFn: async (orderId: string) => {
-      const response = await apiRequest("PATCH", `/api/orders/${orderId}`, {
-        status: "accepted"
-      });
+      const response = await apiRequest("PATCH", `/api/orders/${orderId}/seller-confirm`, {});
       return response.json();
     },
     onSuccess: () => {
@@ -45,7 +43,7 @@ export default function SellerOrders() {
 
   const declineOrderMutation = useMutation({
     mutationFn: async (orderId: string) => {
-      const response = await apiRequest("PATCH", `/api/orders/${orderId}`, {
+      const response = await apiRequest("PATCH", `/api/orders/${orderId}/seller-confirm`, {
         status: "cancelled"
       });
       return response.json();
@@ -134,8 +132,8 @@ export default function SellerOrders() {
                   order={order}
                   onConfirm={() => confirmOrderMutation.mutate(order.id)}
                   onDecline={() => declineOrderMutation.mutate(order.id)}
-                  isConfirming={confirmOrderMutation.isPending}
-                  isDeclining={declineOrderMutation.isPending}
+                  isConfirming={confirmOrderMutation.isPending && confirmOrderMutation.variables === order.id}
+                  isDeclining={declineOrderMutation.isPending && declineOrderMutation.variables === order.id}
                 />
               ))}
             </CardContent>
