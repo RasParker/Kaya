@@ -238,8 +238,8 @@ export default function Browse() {
           {selectedProduct && (
             <>
               <DialogHeader>
-                <DialogTitle>{selectedProduct.name}</DialogTitle>
-                <DialogDescription>{selectedProduct.description || "No description available"}</DialogDescription>
+                <DialogTitle className="sr-only">{selectedProduct.name}</DialogTitle>
+                <DialogDescription className="sr-only">{selectedProduct.description || "No description available"}</DialogDescription>
               </DialogHeader>
 
               <div className="space-y-4">
@@ -251,18 +251,14 @@ export default function Browse() {
                   productName={selectedProduct.name} 
                 />
 
+                {/* Product Title and Description */}
+                <div className="space-y-1">
+                  <h3 className="font-semibold text-lg">{selectedProduct.name}</h3>
+                  <p className="text-sm text-muted-foreground">{selectedProduct.description || "No description available"}</p>
+                </div>
+
                 {/* Product Details */}
                 <div className="space-y-2">
-                  {sellerInfo && (
-                    <div className="p-3 bg-muted rounded-lg mb-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold" data-testid="modal-seller-name">
-                          {sellerInfo.stallName}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Price</span>
                     <span className="font-bold text-xl text-primary">
@@ -273,13 +269,6 @@ export default function Browse() {
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Unit</span>
                     <span className="text-sm font-medium">{selectedProduct.unit}</span>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Stock Available</span>
-                    <span className="text-sm font-medium" data-testid="modal-stock-qty">
-                      {selectedProduct.stockQty ?? 0} {selectedProduct.unit}
-                    </span>
                   </div>
 
                   <div className="flex items-center justify-between">
