@@ -876,7 +876,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Check if declining or accepting
-      const newStatus = req.body.status === "cancelled" ? "cancelled" : "accepted";
+      const newStatus = req.body.status === "cancelled" ? "cancelled" : "seller_confirmed";
 
       const updatedOrder = await storage.updateOrder(req.params.id, {
         status: newStatus
