@@ -31,10 +31,6 @@ export default function SellerOrders() {
       const response = await apiRequest("PATCH", `/api/orders/${orderId}/seller-confirm`, {
         status: "accepted"
       });
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to accept order');
-      }
       return response.json();
     },
     onSuccess: () => {
