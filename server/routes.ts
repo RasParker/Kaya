@@ -849,7 +849,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get orders that are seller_confirmed but don't have kayayo assigned yet
 
 
-  // Seller confirms/accepts an order
+  // Seller confirms/accepts or declines an order
   app.patch("/api/orders/:id/seller-confirm", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
       // Only sellers can confirm orders
@@ -875,8 +875,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "You don't have items in this order" });
       }
 
+      // Check if declining or accepting
+      const newStatus = req.body.status === "cancelled" ? "cancelled" : "accepted";
+
       const updatedOrder = await storage.updateOrder(req.params.id, {
-        status: "accepted"
+        status: newStatus
       });
 
       if (!updatedOrder) {
@@ -884,8 +887,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Broadcast to buyer
+      const eventType = newStatus === "cancelled" ? 'ORDER_CANCELLED' : 'ORDER_ACCEPTED';
       broadcastToUser(updatedOrder.buyerId, {
-        type: 'ORDER_ACCEPTED',
+        type: eventType,
         order: updatedOrder
       });
 
