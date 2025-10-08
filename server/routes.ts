@@ -1999,6 +1999,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "You can only handover your own orders" });
       }
 
+      // Generate expected verification code from order ID (same logic as frontend)
+      const expectedCode = order.id.slice(0, 4).split('').map((char: string) => {
+        const code = char.charCodeAt(0);
+        return (code % 10).toString();
+      }).join('');
+
+      if (verificationCode !== expectedCode) {
+        return res.status(400).json({ message: "Invalid verification code" });
+      }
+
       const updatedOrder = await storage.updateOrder(req.params.id, {
         status: "in_transit",
         riderId: riderId || order.riderId

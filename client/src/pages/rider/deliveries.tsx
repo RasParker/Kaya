@@ -218,6 +218,12 @@ export default function RiderDeliveries() {
 }
 
 function ActiveDeliveryCard({ order, onComplete, isCompleting }: any) {
+  // Generate a simple 4-digit verification code based on order ID
+  const verificationCode = order.id.slice(0, 4).split('').map((char: string) => {
+    const code = char.charCodeAt(0);
+    return (code % 10).toString();
+  }).join('');
+
   return (
     <Card 
       className="border-blue-200 bg-blue-50"
@@ -244,6 +250,10 @@ function ActiveDeliveryCard({ order, onComplete, isCompleting }: any) {
             <span className="font-semibold">₵{parseFloat(order.totalAmount || 0).toFixed(2)}</span>
           </div>
         </div>
+        <div className="bg-white border border-blue-300 rounded-lg p-3">
+          <p className="text-xs text-muted-foreground mb-1">Your Pickup Code was:</p>
+          <p className="text-2xl font-bold text-blue-900 tracking-widest text-center">{verificationCode}</p>
+        </div>
         <Button 
           size="sm" 
           className="w-full"
@@ -259,6 +269,12 @@ function ActiveDeliveryCard({ order, onComplete, isCompleting }: any) {
 }
 
 function AvailableDeliveryCard({ order, onAccept, isAccepting }: any) {
+  // Generate a simple 4-digit verification code based on order ID
+  const verificationCode = order.id.slice(0, 4).split('').map((char: string) => {
+    const code = char.charCodeAt(0);
+    return (code % 10).toString();
+  }).join('');
+
   return (
     <Card data-testid={`available-delivery-${order.id}`}>
       <CardHeader className="pb-3">
@@ -285,6 +301,11 @@ function AvailableDeliveryCard({ order, onAccept, isAccepting }: any) {
               <span className="text-muted-foreground">Est. {order.estimatedDeliveryTime} minutes</span>
             </div>
           )}
+        </div>
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+          <p className="text-xs text-muted-foreground mb-1">Your Pickup Code:</p>
+          <p className="text-2xl font-bold text-blue-900 tracking-widest text-center">{verificationCode}</p>
+          <p className="text-xs text-muted-foreground mt-1">Share this with kayayo during pickup</p>
         </div>
         <Button 
           size="sm" 
