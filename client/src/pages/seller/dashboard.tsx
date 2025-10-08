@@ -356,7 +356,7 @@ export default function SellerDashboard() {
               </p>
             ) : (
               <div className="space-y-3">
-                {orders.slice(0, 3).map((order: any) => (
+                {orders.slice().reverse().slice(0, 3).map((order: any) => (
                   <div 
                     key={order.id} 
                     className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"

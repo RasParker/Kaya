@@ -53,7 +53,7 @@ export default function Orders() {
           </div>
         ) : (
           <div className="space-y-4">
-            {orders.map((order) => (
+            {orders.slice().reverse().map((order) => (
               <OrderCard
                 key={order.id}
                 order={order}
