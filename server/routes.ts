@@ -940,7 +940,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get orders that are seller_confirmed but don't have kayayo assigned yet
+      const orders = Array.from((storage as any).orders.values()).filter((order: any) => 
+        order.status === OrderStatus.SELLER_CONFIRMED && !order.kayayoId
+      );
 
+      res.json(orders);
+    } catch (error) {
+      res.status(500).json({ message: "Server error" });
+    }
+  });
 
   // Seller confirms/accepts or declines an order
   app.patch("/api/orders/:id/seller-confirm", authenticateToken, async (req: AuthenticatedRequest, res) => {
@@ -989,16 +997,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(updatedOrder);
     } catch (error) {
       console.error("Seller confirm order error:", error);
-      res.status(500).json({ message: "Server error" });
-    }
-  });
-
-      const orders = Array.from((storage as any).orders.values()).filter((order: any) => 
-        order.status === OrderStatus.SELLER_CONFIRMED && !order.kayayoId
-      );
-
-      res.json(orders);
-    } catch (error) {
       res.status(500).json({ message: "Server error" });
     }
   });
