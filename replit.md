@@ -4,6 +4,20 @@ This is a marketplace application called "rest-express" designed for connecting 
 
 ## Recent Changes
 
+**2025-10-08**: UI/UX improvements and bug fixes
+- Fixed kayayo page blank issue in cart - resolved React hooks being called conditionally causing rendering errors
+- Fixed delivery address save functionality - delivery_addresses table schema properly migrated to database
+- Fixed order status tracking dot highlighting - implemented proper status-based highlighting for order progress visualization
+- Implemented complete user avatar upload feature with Cloudinary integration
+  - Added file upload UI with image preview in account settings
+  - Supports file size validation (max 5MB) and format selection (JPG, PNG, GIF)
+  - Includes avatar removal functionality with proper backend clearing
+  - Base64 images automatically uploaded to Cloudinary and stored as secure URLs
+- Enhanced rider verification code system for kayayo handover
+  - Added expected verification code display in kayayo order details during rider handover
+  - Kayayo can now see what code the rider should show before confirming handover
+  - Improved security and user experience for order handoff process
+
 **2025-10-07**: Database migration to Supabase and image storage migration to Cloudinary
 - Successfully migrated from Replit's built-in PostgreSQL database to Supabase
 - Database schema pushed to Supabase using Drizzle ORM (`npm run db:push`)
