@@ -67,12 +67,12 @@ export default function KayayoTasks() {
   // Available orders - pending and seller confirmed orders without a kayayo
   const availableOrders = orders.filter((order: Order) => 
     !order.kayayoId && ['pending', 'seller_confirmed'].includes(order.status)
-  );
+  ).reverse();
 
   // My active orders
   const myActiveOrders = orders.filter((order: Order) => 
     order.kayayoId === user.id && ['kayayo_accepted', 'shopping'].includes(order.status)
-  );
+  ).reverse();
 
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
