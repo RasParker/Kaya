@@ -83,7 +83,10 @@ export default function Cart() {
 
   const createAddressMutation = useMutation({
     mutationFn: async (data: { label: string; address: string; isDefault: boolean }) => {
-      const response = await apiRequest("POST", "/api/delivery-addresses", data);
+      const response = await apiRequest("POST", "/api/delivery-addresses", {
+        ...data,
+        userId: user?.id
+      });
       return response.json();
     },
     onSuccess: () => {
@@ -94,6 +97,14 @@ export default function Cart() {
       toast({
         title: "Address saved",
         description: "Your delivery address has been saved successfully.",
+      });
+    },
+    onError: (error: any) => {
+      console.error("Failed to save address:", error);
+      toast({
+        title: "Failed to save address",
+        description: error.message || "Please try again",
+        variant: "destructive",
       });
     },
   });

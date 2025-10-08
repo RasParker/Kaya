@@ -496,7 +496,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const addresses = await storage.getDeliveryAddressesByUser(req.user!.userId);
       res.json(addresses);
     } catch (error) {
-      res.status(500).json({ message: "Server error" });
+      console.error("Get delivery addresses error:", error);
+      if (error instanceof Error) {
+        console.error("Error details:", error.message);
+      }
+      res.status(500).json({ 
+        message: "Server error",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
     }
   });
 
@@ -509,7 +516,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const address = await storage.createDeliveryAddress(addressData);
       res.json(address);
     } catch (error) {
-      res.status(400).json({ message: "Invalid address data" });
+      console.error("Delivery address creation error:", error);
+      if (error instanceof Error) {
+        console.error("Error details:", error.message);
+      }
+      res.status(400).json({ 
+        message: "Invalid address data",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
     }
   });
 

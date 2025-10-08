@@ -197,6 +197,8 @@ export const insertDisputeSchema = createInsertSchema(disputes).omit({
 export const insertDeliveryAddressSchema = createInsertSchema(deliveryAddresses).omit({
   id: true,
   createdAt: true,
+}).extend({
+  userId: z.string().optional(),
 });
 
 // Types
