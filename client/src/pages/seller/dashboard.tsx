@@ -350,7 +350,7 @@ export default function SellerDashboard() {
             </Button>
           </CardHeader>
           <CardContent>
-            {orders.slice(0, 3).length === 0 ? (
+            {orders.length === 0 ? (
               <p className="text-center text-muted-foreground py-4">
                 No orders yet
               </p>
