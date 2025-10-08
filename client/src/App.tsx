@@ -23,6 +23,7 @@ import AccountSettings from "@/pages/account-settings";
 import SellerDashboard from "@/pages/seller/dashboard";
 import SellerProducts from "@/pages/seller/products";
 import SellerOrders from "@/pages/seller/orders";
+import SellerOrderDetails from "@/pages/seller/order-details";
 import SellerWithdraw from "@/pages/seller/withdraw";
 import SellerAnalytics from "@/pages/seller/analytics";
 import KayayoDashboard from "@/pages/kayayo/dashboard";
@@ -118,6 +119,11 @@ function Router() {
       <Route path="/seller/orders">
         <ProtectedRoute allowedRoles={['seller']}>
           <SellerOrders />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/seller/order/:orderId">
+        <ProtectedRoute allowedRoles={['seller']}>
+          <SellerOrderDetails />
         </ProtectedRoute>
       </Route>
       <Route path="/seller/withdraw">
