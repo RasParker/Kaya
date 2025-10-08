@@ -702,7 +702,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get pending orders (for sellers/kayayos/riders) - must be before :id route
   app.get("/api/orders/pending", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
-      const orders = await storage.getPendingOrders();
+      const userType = req.user!.userType;
+      let orders: any[] = [];
+
+      if (userType === 'seller') {
+        const sellerProfile = await storage.getSellerByUserId(req.user!.userId);
+        if (sellerProfile) {
+          orders = await storage.getPendingOrdersBySeller(sellerProfile.id);
+        }
+      } else {
+        // For kayayos, riders, and others, return all pending orders
+        orders = await storage.getPendingOrders();
+      }
+      
       res.json(orders);
     } catch (error) {
       res.status(500).json({ message: "Server error" });

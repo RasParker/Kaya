@@ -263,7 +263,7 @@ export class PostgresStorage implements IStorage {
   async getOrdersBySeller(sellerId: string): Promise<Order[]> {
     // This requires a join with order_items to find orders containing products from this seller
     const result = await this.db
-      .select({
+      .selectDistinct({
         id: schema.orders.id,
         buyerId: schema.orders.buyerId,
         kayayoId: schema.orders.kayayoId,
@@ -298,6 +298,36 @@ export class PostgresStorage implements IStorage {
 
   async getPendingOrders(): Promise<Order[]> {
     return await this.db.select().from(schema.orders).where(eq(schema.orders.status, 'pending'));
+  }
+
+  async getPendingOrdersBySeller(sellerId: string): Promise<Order[]> {
+    const result = await this.db
+      .selectDistinct({
+        id: schema.orders.id,
+        buyerId: schema.orders.buyerId,
+        kayayoId: schema.orders.kayayoId,
+        riderId: schema.orders.riderId,
+        status: schema.orders.status,
+        totalAmount: schema.orders.totalAmount,
+        deliveryAddress: schema.orders.deliveryAddress,
+        deliveryFee: schema.orders.deliveryFee,
+        kayayoFee: schema.orders.kayayoFee,
+        platformFee: schema.orders.platformFee,
+        estimatedDeliveryTime: schema.orders.estimatedDeliveryTime,
+        paymentMethod: schema.orders.paymentMethod,
+        createdAt: schema.orders.createdAt,
+        confirmedAt: schema.orders.confirmedAt,
+        deliveredAt: schema.orders.deliveredAt,
+      })
+      .from(schema.orders)
+      .innerJoin(schema.orderItems, eq(schema.orders.id, schema.orderItems.orderId))
+      .innerJoin(schema.products, eq(schema.orderItems.productId, schema.products.id))
+      .where(and(
+        eq(schema.products.sellerId, sellerId),
+        eq(schema.orders.status, 'pending')
+      ));
+    
+    return result;
   }
 
   async getAllOrders(): Promise<Order[]> {
