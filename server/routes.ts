@@ -575,7 +575,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           orders = await storage.getOrdersByRider(userId);
           break;
         case 'seller':
-          orders = await storage.getOrdersBySeller(userId);
+          const sellerProfile = await storage.getSellerByUserId(userId);
+          if (sellerProfile) {
+            orders = await storage.getOrdersBySeller(sellerProfile.id);
+          } else {
+            orders = [];
+          }
           break;
         default:
           orders = [];
