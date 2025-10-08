@@ -528,12 +528,12 @@ export default function Cart() {
               <Button
                 className="w-full h-12 text-lg font-semibold shadow-lg"
                 onClick={handleCheckout}
-                disabled={!selectedKayayo || !deliveryAddress.trim()}
+                disabled={!selectedKayayo || !getDeliveryAddress().trim()}
                 data-testid="button-checkout"
               >
                 {!selectedKayayo 
                   ? "Select a Kayayo to Continue"
-                  : !deliveryAddress.trim()
+                  : !getDeliveryAddress().trim()
                     ? "Enter Delivery Address"
                     : "Proceed to Payment"
                 }

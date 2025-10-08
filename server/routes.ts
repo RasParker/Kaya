@@ -217,11 +217,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Unauthorized" });
       }
 
-      const { name, phone, email } = req.body;
+      const { name, phone, email, profileImage } = req.body;
       const updateData: any = {};
       if (name !== undefined) updateData.name = name;
       if (phone !== undefined) updateData.phone = phone;
       if (email !== undefined) updateData.email = email;
+      
+      // Handle profile image upload
+      if (profileImage !== undefined) {
+        if (profileImage === null || profileImage === "") {
+          // Allow removing profile image
+          updateData.profileImage = null;
+        } else if (profileImage.startsWith('data:')) {
+          // Upload new base64 image to Cloudinary
+          updateData.profileImage = await uploadImageToCloudinary(profileImage, 'makola-connect/profiles');
+        } else {
+          // Keep existing URL
+          updateData.profileImage = profileImage;
+        }
+      }
 
       const updatedUser = await storage.updateUser(userId, updateData);
       if (!updatedUser) {

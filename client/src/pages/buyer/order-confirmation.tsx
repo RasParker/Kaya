@@ -30,10 +30,11 @@ export default function OrderConfirmationPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "pending": return "yellow";
-      case "accepted": return "blue";
+      case "seller_confirmed": return "blue";
+      case "kayayo_accepted": return "blue";
       case "shopping": return "blue";
-      case "ready": return "green";
-      case "picked_up": return "blue";
+      case "ready_for_pickup": return "green";
+      case "in_transit": return "blue";
       case "delivered": return "green";
       case "cancelled": return "red";
       default: return "gray";
@@ -43,10 +44,11 @@ export default function OrderConfirmationPage() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "pending": return <Clock className="h-4 w-4" />;
-      case "accepted": return <CheckCircle className="h-4 w-4" />;
+      case "seller_confirmed": return <CheckCircle className="h-4 w-4" />;
+      case "kayayo_accepted": return <User className="h-4 w-4" />;
       case "shopping": return <Package className="h-4 w-4" />;
-      case "ready": return <CheckCircle className="h-4 w-4" />;
-      case "picked_up": return <Truck className="h-4 w-4" />;
+      case "ready_for_pickup": return <CheckCircle className="h-4 w-4" />;
+      case "in_transit": return <Truck className="h-4 w-4" />;
       case "delivered": return <CheckCircle className="h-4 w-4" />;
       case "cancelled": return <AlertCircle className="h-4 w-4" />;
       default: return <Clock className="h-4 w-4" />;
@@ -56,10 +58,11 @@ export default function OrderConfirmationPage() {
   const getStatusMessage = (status: string) => {
     switch (status) {
       case "pending": return "Waiting for seller acceptance";
-      case "accepted": return "Order accepted by sellers";
+      case "seller_confirmed": return "Order accepted by sellers";
+      case "kayayo_accepted": return "Kayayo assigned to your order";
       case "shopping": return "Kayayo is shopping for your items";
-      case "ready": return "Items ready for pickup";
-      case "picked_up": return "Order picked up by rider";
+      case "ready_for_pickup": return "Items ready for pickup";
+      case "in_transit": return "Order picked up by rider";
       case "delivered": return "Order delivered successfully";
       case "cancelled": return "Order was cancelled";
       default: return "Processing your order";
@@ -139,23 +142,27 @@ export default function OrderConfirmationPage() {
             {/* Progress Steps */}
             <div className="space-y-3">
               <div className="flex items-center gap-3">
-                <div className={`w-3 h-3 rounded-full ${["pending", "accepted", "shopping", "ready", "picked_up", "delivered"].includes(order.status) ? "bg-green-500" : "bg-gray-300"}`} />
+                <div className={`w-3 h-3 rounded-full ${["pending", "seller_confirmed", "kayayo_accepted", "shopping", "ready_for_pickup", "in_transit", "delivered"].includes(order.status) ? "bg-green-500" : "bg-gray-300"}`} />
                 <span className="text-sm">Order placed</span>
               </div>
               <div className="flex items-center gap-3">
-                <div className={`w-3 h-3 rounded-full ${["accepted", "shopping", "ready", "picked_up", "delivered"].includes(order.status) ? "bg-green-500" : "bg-gray-300"}`} />
+                <div className={`w-3 h-3 rounded-full ${["seller_confirmed", "kayayo_accepted", "shopping", "ready_for_pickup", "in_transit", "delivered"].includes(order.status) ? "bg-green-500" : "bg-gray-300"}`} />
                 <span className="text-sm">Sellers accepted</span>
               </div>
               <div className="flex items-center gap-3">
-                <div className={`w-3 h-3 rounded-full ${["shopping", "ready", "picked_up", "delivered"].includes(order.status) ? "bg-green-500" : "bg-gray-300"}`} />
+                <div className={`w-3 h-3 rounded-full ${["kayayo_accepted", "shopping", "ready_for_pickup", "in_transit", "delivered"].includes(order.status) ? "bg-green-500" : "bg-gray-300"}`} />
+                <span className="text-sm">Kayayo assigned</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className={`w-3 h-3 rounded-full ${["shopping", "ready_for_pickup", "in_transit", "delivered"].includes(order.status) ? "bg-green-500" : "bg-gray-300"}`} />
                 <span className="text-sm">Kayayo shopping</span>
               </div>
               <div className="flex items-center gap-3">
-                <div className={`w-3 h-3 rounded-full ${["ready", "picked_up", "delivered"].includes(order.status) ? "bg-green-500" : "bg-gray-300"}`} />
+                <div className={`w-3 h-3 rounded-full ${["ready_for_pickup", "in_transit", "delivered"].includes(order.status) ? "bg-green-500" : "bg-gray-300"}`} />
                 <span className="text-sm">Ready for pickup</span>
               </div>
               <div className="flex items-center gap-3">
-                <div className={`w-3 h-3 rounded-full ${["picked_up", "delivered"].includes(order.status) ? "bg-green-500" : "bg-gray-300"}`} />
+                <div className={`w-3 h-3 rounded-full ${["in_transit", "delivered"].includes(order.status) ? "bg-green-500" : "bg-gray-300"}`} />
                 <span className="text-sm">Out for delivery</span>
               </div>
               <div className="flex items-center gap-3">

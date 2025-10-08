@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/lib/auth";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, User, Phone, Mail, Save, Store, Clock, Globe } from "lucide-react";
+import { ArrowLeft, User, Phone, Mail, Save, Store, Clock, Globe, Camera, X } from "lucide-react";
 
 export default function AccountSettings() {
   const [, setLocation] = useLocation();
@@ -21,6 +21,9 @@ export default function AccountSettings() {
   const [name, setName] = useState(user?.name || "");
   const [phone, setPhone] = useState(user?.phone || "");
   const [email, setEmail] = useState(user?.email || "");
+  const [profileImage, setProfileImage] = useState(user?.profileImage || "");
+  const [profileImagePreview, setProfileImagePreview] = useState(user?.profileImage || "");
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Seller-specific fields
   const [market, setMarket] = useState("Makola");
@@ -44,12 +47,43 @@ export default function AccountSettings() {
     }
   }, [sellerProfile]);
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "File too large",
+          description: "Please select an image smaller than 5MB",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64 = reader.result as string;
+        setProfileImage(base64);
+        setProfileImagePreview(base64);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeProfileImage = () => {
+    setProfileImage("");
+    setProfileImagePreview("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
   const updateProfileMutation = useMutation({
-    mutationFn: async (data: { name: string; phone?: string; email?: string; sellerData?: any }) => {
+    mutationFn: async (data: { name: string; phone?: string; email?: string; profileImage?: string; sellerData?: any }) => {
       const response = await apiRequest("PATCH", `/api/users/${user?.id}`, {
         name: data.name,
         phone: data.phone,
         email: data.email,
+        profileImage: data.profileImage,
       });
       const updatedUser = await response.json();
       
@@ -114,6 +148,7 @@ export default function AccountSettings() {
       name,
       phone: phone || undefined,
       email: email || undefined,
+      profileImage: profileImage === "" ? "" : (profileImage || undefined),
       sellerData,
     });
   };
@@ -159,6 +194,59 @@ export default function AccountSettings() {
               <CardTitle className="text-lg">Personal Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Profile Image */}
+              <div className="space-y-2">
+                <Label>Profile Picture</Label>
+                <div className="flex items-center gap-4">
+                  <div className="relative">
+                    <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center overflow-hidden">
+                      {profileImagePreview ? (
+                        <img
+                          src={profileImagePreview}
+                          alt="Profile preview"
+                          className="w-full h-full object-cover"
+                          data-testid="img-profile-preview"
+                        />
+                      ) : (
+                        <User className="h-10 w-10 text-muted-foreground" />
+                      )}
+                    </div>
+                    {profileImagePreview && (
+                      <button
+                        type="button"
+                        onClick={removeProfileImage}
+                        className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center hover:bg-destructive/90"
+                        data-testid="button-remove-avatar"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="hidden"
+                      data-testid="input-avatar-file"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => fileInputRef.current?.click()}
+                      data-testid="button-upload-avatar"
+                    >
+                      <Camera className="h-4 w-4 mr-2" />
+                      Change Picture
+                    </Button>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      JPG, PNG or GIF. Max 5MB
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               {/* Name */}
               <div className="space-y-2">
                 <Label htmlFor="name">

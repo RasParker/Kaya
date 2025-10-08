@@ -555,8 +555,18 @@ export default function KayayoOrderDetails() {
                 </div>
               </div>
             </div>
+            <div className="bg-green-50 border border-green-300 rounded-lg p-4">
+              <p className="text-xs text-muted-foreground mb-2 text-center">Expected Rider Code:</p>
+              <p className="text-3xl font-bold text-green-900 tracking-widest text-center" data-testid="text-expected-rider-code">
+                {order.id.slice(0, 4).split('').map((char: string) => {
+                  const code = char.charCodeAt(0);
+                  return (code % 10).toString();
+                }).join('')}
+              </p>
+              <p className="text-xs text-muted-foreground mt-2 text-center">Ask rider to show their pickup code</p>
+            </div>
             <div>
-              <Label htmlFor="rider-code">Rider Verification Code</Label>
+              <Label htmlFor="rider-code">Enter Rider's Code to Confirm</Label>
               <Input
                 id="rider-code"
                 type="text"
@@ -567,6 +577,7 @@ export default function KayayoOrderDetails() {
                 className="text-center text-2xl tracking-widest"
                 data-testid="input-rider-code"
               />
+              <p className="text-xs text-muted-foreground mt-1">The codes must match to complete handover</p>
             </div>
             <Button
               className="w-full bg-blue-600 hover:bg-blue-700"
