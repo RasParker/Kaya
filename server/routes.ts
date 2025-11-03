@@ -5,7 +5,7 @@ import bcrypt from "bcrypt";
 import { storage } from "./storage";
 import { insertUserSchema, insertProductSchema, insertCartItemSchema, insertOrderSchema, insertDeliveryAddressSchema } from "@shared/schema";
 import * as schema from "@shared/schema";
-import { eq, like, and } from "drizzle-orm";
+import { eq, like, and, isNull } from "drizzle-orm";
 import jwt from "jsonwebtoken";
 import { OrderStateMachine, OrderStatus, OrderStateError } from "./orderStateMachine";
 import { uploadImageToCloudinary, uploadMultipleImagesToCloudinary } from "./cloudinary";
@@ -876,6 +876,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(updatedOrder);
     } catch (error) {
       console.error("Accept order error:", error);
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+
+  // Rider accepts a delivery
+  app.patch("/api/orders/:id/accept-delivery", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      // Only riders can accept deliveries
+      if (req.user!.userType !== 'rider') {
+        return res.status(403).json({ message: "Only riders can accept deliveries" });
+      }
+
+      const order = await storage.getOrder(req.params.id);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      // Verify order is ready for pickup
+      if (order.status !== 'ready_for_pickup') {
+        return res.status(400).json({ message: "Order is not ready for pickup" });
+      }
+
+      // Verify order is not already assigned to a rider
+      if (order.riderId) {
+        return res.status(409).json({ message: "This delivery has already been accepted by another rider" });
+      }
+
+      // Atomic update: only update if riderId is still null and status is still ready_for_pickup
+      const updatedOrder = await storage.acceptDeliveryAsRider(req.params.id, req.user!.userId);
+
+      if (!updatedOrder) {
+        return res.status(409).json({ message: "This delivery has already been accepted by another rider" });
+      }
+
+      // Broadcast to buyer
+      broadcastToUser(updatedOrder.buyerId, {
+        type: 'ORDER_UPDATED',
+        order: updatedOrder
+      });
+
+      // Broadcast to rider
+      broadcastToUser(req.user!.userId, {
+        type: 'DELIVERY_ACCEPTED',
+        order: updatedOrder
+      });
+
+      // Broadcast to kayayo if assigned
+      if (updatedOrder.kayayoId) {
+        broadcastToUser(updatedOrder.kayayoId, {
+          type: 'ORDER_UPDATED',
+          order: updatedOrder
+        });
+      }
+
+      res.json(updatedOrder);
+    } catch (error) {
+      console.error("Accept delivery error:", error);
       res.status(500).json({ message: "Server error" });
     }
   });

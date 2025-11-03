@@ -24,7 +24,7 @@ import { randomUUID } from "crypto";
 import bcrypt from "bcrypt";
 import { drizzle } from 'drizzle-orm/node-postgres';
 import pg from 'pg';
-import { eq, like, and, asc, desc } from 'drizzle-orm';
+import { eq, like, and, asc, desc, isNull } from 'drizzle-orm';
 import * as schema from '@shared/schema';
 
 const { Pool } = pg;
@@ -66,6 +66,7 @@ export interface IStorage {
   getOrder(id: string): Promise<Order | undefined>;
   createOrder(order: InsertOrder): Promise<Order>;
   updateOrder(id: string, order: Partial<Order>): Promise<Order | undefined>;
+  acceptDeliveryAsRider(orderId: string, riderId: string): Promise<Order | undefined>;
   getOrdersByBuyer(buyerId: string): Promise<Order[]>;
   getOrdersBySeller(sellerId: string): Promise<Order[]>;
   getOrdersByKayayo(kayayoId: string): Promise<Order[]>;
@@ -253,6 +254,24 @@ export class PostgresStorage implements IStorage {
 
   async updateOrder(id: string, orderUpdate: Partial<Order>): Promise<Order | undefined> {
     const result = await this.db.update(schema.orders).set(orderUpdate).where(eq(schema.orders.id, id)).returning();
+    return result[0];
+  }
+
+  async acceptDeliveryAsRider(orderId: string, riderId: string): Promise<Order | undefined> {
+    const result = await this.db
+      .update(schema.orders)
+      .set({
+        riderId,
+        status: "in_transit"
+      })
+      .where(
+        and(
+          eq(schema.orders.id, orderId),
+          eq(schema.orders.status, 'ready_for_pickup'),
+          isNull(schema.orders.riderId)
+        )
+      )
+      .returning();
     return result[0];
   }
 

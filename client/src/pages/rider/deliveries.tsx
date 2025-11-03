@@ -35,10 +35,11 @@ export default function RiderDeliveries() {
 
   const acceptDeliveryMutation = useMutation({
     mutationFn: async (orderId: string) => {
-      const response = await apiRequest("PATCH", `/api/orders/${orderId}`, {
-        status: "in_transit",
-        riderId: user?.id
-      });
+      const response = await apiRequest("PATCH", `/api/orders/${orderId}/accept-delivery`, {});
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to accept delivery");
+      }
       return response.json();
     },
     onSuccess: () => {
@@ -46,6 +47,13 @@ export default function RiderDeliveries() {
       toast({
         title: "Delivery accepted",
         description: "You have accepted this delivery order.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to accept delivery",
+        description: error.message,
+        variant: "destructive",
       });
     },
   });
@@ -56,6 +64,10 @@ export default function RiderDeliveries() {
         status: "delivered",
         deliveredAt: new Date().toISOString()
       });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to complete delivery");
+      }
       return response.json();
     },
     onSuccess: () => {
@@ -63,6 +75,13 @@ export default function RiderDeliveries() {
       toast({
         title: "Delivery completed",
         description: "Order has been marked as delivered.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to complete delivery",
+        description: error.message,
+        variant: "destructive",
       });
     },
   });
@@ -157,7 +176,7 @@ export default function RiderDeliveries() {
                   key={order.id} 
                   order={order} 
                   onComplete={() => completeDeliveryMutation.mutate(order.id)}
-                  isCompleting={completeDeliveryMutation.isPending}
+                  isCompleting={completeDeliveryMutation.isPending && completeDeliveryMutation.variables === order.id}
                 />
               ))
             )}
@@ -184,7 +203,7 @@ export default function RiderDeliveries() {
                   key={order.id} 
                   order={order} 
                   onAccept={() => acceptDeliveryMutation.mutate(order.id)}
-                  isAccepting={acceptDeliveryMutation.isPending}
+                  isAccepting={acceptDeliveryMutation.isPending && acceptDeliveryMutation.variables === order.id}
                 />
               ))
             )}
