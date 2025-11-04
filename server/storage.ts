@@ -71,6 +71,7 @@ export interface IStorage {
   getOrdersBySeller(sellerId: string): Promise<Order[]>;
   getOrdersByKayayo(kayayoId: string): Promise<Order[]>;
   getOrdersByRider(riderId: string): Promise<Order[]>;
+  getOrdersForRider(riderId: string): Promise<Order[]>;
   getPendingOrders(): Promise<Order[]>;
   getAllOrders(): Promise<Order[]>;
 
@@ -313,6 +314,17 @@ export class PostgresStorage implements IStorage {
 
   async getOrdersByRider(riderId: string): Promise<Order[]> {
     return await this.db.select().from(schema.orders).where(eq(schema.orders.riderId, riderId));
+  }
+
+  async getOrdersForRider(riderId: string): Promise<Order[]> {
+    const assignedOrders = await this.db.select().from(schema.orders).where(eq(schema.orders.riderId, riderId));
+    const availableOrders = await this.db.select().from(schema.orders).where(
+      and(
+        isNull(schema.orders.riderId),
+        eq(schema.orders.status, 'ready_for_pickup')
+      )
+    );
+    return [...assignedOrders, ...availableOrders];
   }
 
   async getPendingOrders(): Promise<Order[]> {

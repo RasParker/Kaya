@@ -691,7 +691,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           orders = await storage.getOrdersByKayayo(userId);
           break;
         case 'rider':
-          orders = await storage.getOrdersByRider(userId);
+          orders = await storage.getOrdersForRider(userId);
           break;
         case 'seller':
           const sellerProfile = await storage.getSellerByUserId(userId);
