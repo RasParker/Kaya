@@ -1079,35 +1079,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(404).json({ message: "Order not found" });
         }
 
-        try {
-          // Validate state transition using state machine
-          OrderStateMachine.validateTransition(
-            currentOrder,
-            OrderStatus.SELLER_CONFIRMED,
-            'seller',
-            req.user!.userId
-          );
+        // Only update order status if it's not already seller_confirmed
+        if (currentOrder.status !== OrderStatus.SELLER_CONFIRMED) {
+          try {
+            // Validate state transition using state machine
+            OrderStateMachine.validateTransition(
+              currentOrder,
+              OrderStatus.SELLER_CONFIRMED,
+              'seller',
+              req.user!.userId
+            );
 
-          // Update order status to seller_confirmed
-          const order = await storage.updateOrder(req.params.orderId, {
-            status: OrderStatus.SELLER_CONFIRMED,
-            confirmedAt: new Date()
-          });
+            // Update order status to seller_confirmed
+            const order = await storage.updateOrder(req.params.orderId, {
+              status: OrderStatus.SELLER_CONFIRMED,
+              confirmedAt: new Date()
+            });
 
-          if (order) {
-            broadcastToUser(order.buyerId, {
-              type: 'ORDER_SELLER_CONFIRMED',
-              order
-            });
+            if (order) {
+              broadcastToUser(order.buyerId, {
+                type: 'ORDER_SELLER_CONFIRMED',
+                order
+              });
+            }
+          } catch (error) {
+            if (error instanceof OrderStateError) {
+              return res.status(400).json({ 
+                message: error.message,
+                code: error.code 
+              });
+            }
+            throw error;
           }
-        } catch (error) {
-          if (error instanceof OrderStateError) {
-            return res.status(400).json({ 
-              message: error.message,
-              code: error.code 
-            });
-          }
-          throw error;
         }
       }
 
