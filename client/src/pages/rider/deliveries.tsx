@@ -237,11 +237,7 @@ export default function RiderDeliveries() {
 }
 
 function ActiveDeliveryCard({ order, onComplete, isCompleting }: any) {
-  // Generate a simple 4-digit verification code based on order ID
-  const verificationCode = order.id.slice(0, 4).split('').map((char: string) => {
-    const code = char.charCodeAt(0);
-    return (code % 10).toString();
-  }).join('');
+  const [, setLocation] = useLocation();
 
   return (
     <Card 
@@ -269,30 +265,33 @@ function ActiveDeliveryCard({ order, onComplete, isCompleting }: any) {
             <span className="font-semibold">₵{parseFloat(order.totalAmount || 0).toFixed(2)}</span>
           </div>
         </div>
-        <div className="bg-white border border-blue-300 rounded-lg p-3">
-          <p className="text-xs text-muted-foreground mb-1">Your Pickup Code was:</p>
-          <p className="text-2xl font-bold text-blue-900 tracking-widest text-center">{verificationCode}</p>
+        <div className="flex gap-2">
+          <Button 
+            size="sm" 
+            variant="outline"
+            className="flex-1"
+            onClick={() => setLocation(`/rider/order/${order.id}`)}
+            data-testid={`button-view-details-${order.id}`}
+          >
+            View Details
+          </Button>
+          <Button 
+            size="sm" 
+            className="flex-1"
+            onClick={onComplete}
+            disabled={isCompleting}
+            data-testid={`button-complete-${order.id}`}
+          >
+            {isCompleting ? 'Completing...' : 'Mark as Delivered'}
+          </Button>
         </div>
-        <Button 
-          size="sm" 
-          className="w-full"
-          onClick={onComplete}
-          disabled={isCompleting}
-          data-testid={`button-complete-${order.id}`}
-        >
-          {isCompleting ? 'Completing...' : 'Mark as Delivered'}
-        </Button>
       </CardContent>
     </Card>
   );
 }
 
 function AvailableDeliveryCard({ order, onAccept, isAccepting }: any) {
-  // Generate a simple 4-digit verification code based on order ID
-  const verificationCode = order.id.slice(0, 4).split('').map((char: string) => {
-    const code = char.charCodeAt(0);
-    return (code % 10).toString();
-  }).join('');
+  const [, setLocation] = useLocation();
 
   return (
     <Card data-testid={`available-delivery-${order.id}`}>
@@ -322,9 +321,9 @@ function AvailableDeliveryCard({ order, onAccept, isAccepting }: any) {
           )}
         </div>
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-          <p className="text-xs text-muted-foreground mb-1">Your Pickup Code:</p>
-          <p className="text-2xl font-bold text-blue-900 tracking-widest text-center">{verificationCode}</p>
-          <p className="text-xs text-muted-foreground mt-1">Share this with kayayo during pickup</p>
+          <p className="text-xs text-muted-foreground text-center">
+            Accept this delivery to get your pickup code
+          </p>
         </div>
         <Button 
           size="sm" 
