@@ -1079,8 +1079,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(404).json({ message: "Order not found" });
         }
 
-        // Only update order status if it's not already seller_confirmed
-        if (currentOrder.status !== OrderStatus.SELLER_CONFIRMED) {
+        // Only update order status if it's in pending state (not already progressed)
+        if (currentOrder.status === OrderStatus.PENDING) {
           try {
             // Validate state transition using state machine
             OrderStateMachine.validateTransition(
