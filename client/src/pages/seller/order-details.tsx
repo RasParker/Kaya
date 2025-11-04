@@ -31,6 +31,7 @@ export default function SellerOrderDetails() {
   const [showHandoverDialog, setShowHandoverDialog] = useState(false);
   const [verificationCode, setVerificationCode] = useState("");
   const [serviceProvidersOpen, setServiceProvidersOpen] = useState(false);
+  const [confirmingItemId, setConfirmingItemId] = useState<string | null>(null);
 
   const { data: order, isLoading } = useQuery<OrderWithDetails>({
     queryKey: [`/api/orders/${params?.orderId}`],
@@ -44,18 +45,21 @@ export default function SellerOrderDetails() {
 
   const confirmItemMutation = useMutation({
     mutationFn: async (itemId: string) => {
+      setConfirmingItemId(itemId);
       const response = await apiRequest("PATCH", `/api/orders/${order?.id}/items/${itemId}/confirm`, {});
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/orders/${params?.orderId}/items`] });
       queryClient.invalidateQueries({ queryKey: [`/api/orders/${params?.orderId}`] });
+      setConfirmingItemId(null);
       toast({
         title: "Item confirmed",
         description: "Item has been marked as ready for handover.",
       });
     },
     onError: (error: any) => {
+      setConfirmingItemId(null);
       toast({
         title: "Failed to confirm item",
         description: error.message || "Could not confirm item",
@@ -255,10 +259,10 @@ export default function SellerOrderDetails() {
                       variant="outline"
                       className="w-full mt-2"
                       onClick={() => confirmItemMutation.mutate(item.id)}
-                      disabled={confirmItemMutation.isPending}
+                      disabled={confirmingItemId === item.id}
                       data-testid={`button-confirm-item-${item.id}`}
                     >
-                      {confirmItemMutation.isPending ? 'Confirming...' : 'Confirm Item'}
+                      {confirmingItemId === item.id ? 'Confirming...' : 'Confirm Item'}
                     </Button>
                   )}
                 </div>
