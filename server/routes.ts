@@ -2,6 +2,7 @@ import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import bcrypt from "bcrypt";
+import { randomBytes } from "crypto";
 import { storage } from "./storage";
 import { insertUserSchema, insertProductSchema, insertCartItemSchema, insertOrderSchema, insertDeliveryAddressSchema } from "@shared/schema";
 import * as schema from "@shared/schema";
@@ -64,6 +65,89 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (client && client.readyState === WebSocket.OPEN) {
       client.send(JSON.stringify(message));
     }
+  };
+
+  // Secure pickup code storage (in-memory)
+  interface PickupCode {
+    code: string;
+    orderId: string;
+    role: 'kayayo' | 'rider';
+    expiresAt: number;
+    used: boolean;
+  }
+  
+  const pickupCodes = new Map<string, PickupCode>();
+  
+  // Cleanup expired codes every 5 minutes
+  setInterval(() => {
+    const now = Date.now();
+    const entries = Array.from(pickupCodes.entries());
+    for (const [key, value] of entries) {
+      if (value.expiresAt < now) {
+        pickupCodes.delete(key);
+      }
+    }
+  }, 5 * 60 * 1000);
+  
+  // Generate secure random 6-digit code
+  const generateSecurePickupCode = (): string => {
+    const bytes = randomBytes(3);
+    const num = bytes.readUIntBE(0, 3) % 1000000;
+    return num.toString().padStart(6, '0');
+  };
+  
+  // Get or create pickup code
+  const getPickupCode = (orderId: string, role: 'kayayo' | 'rider'): string => {
+    const key = `${orderId}:${role}`;
+    let existing = pickupCodes.get(key);
+    
+    // Return existing code if valid and not used
+    if (existing && existing.expiresAt > Date.now() && !existing.used) {
+      return existing.code;
+    }
+    
+    // Generate new code
+    const code = generateSecurePickupCode();
+    const expiresAt = Date.now() + (30 * 60 * 1000); // 30 minutes
+    
+    pickupCodes.set(key, {
+      code,
+      orderId,
+      role,
+      expiresAt,
+      used: false
+    });
+    
+    return code;
+  };
+  
+  // Verify and invalidate pickup code
+  const verifyPickupCode = (orderId: string, role: 'kayayo' | 'rider', code: string): boolean => {
+    const key = `${orderId}:${role}`;
+    const stored = pickupCodes.get(key);
+    
+    if (!stored) {
+      return false;
+    }
+    
+    if (stored.expiresAt < Date.now()) {
+      pickupCodes.delete(key);
+      return false;
+    }
+    
+    if (stored.used) {
+      return false;
+    }
+    
+    if (stored.code !== code) {
+      return false;
+    }
+    
+    // Mark as used
+    stored.used = true;
+    pickupCodes.set(key, stored);
+    
+    return true;
   };
 
   // Auth routes
@@ -2010,17 +2094,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/orders/:id/verify-seller", authenticateToken, async (req: AuthenticatedRequest, res) => {
+  // Get Kayayo's pickup code for display
+  app.get("/api/orders/:id/kayayo-pickup-code", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
       if (req.user!.userType !== 'kayayo') {
-        return res.status(403).json({ message: "Only kayayos can verify sellers" });
+        return res.status(403).json({ message: "Only kayayos can view their pickup code" });
+      }
+
+      const order = await storage.getOrder(req.params.id);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      if (order.kayayoId !== req.user!.userId) {
+        return res.status(403).json({ message: "You can only view codes for your own orders" });
+      }
+
+      const pickupCode = getPickupCode(order.id, 'kayayo');
+      res.json({ pickupCode });
+    } catch (error) {
+      console.error('Get kayayo pickup code error:', error);
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+
+  // Seller verifies Kayayo's pickup code (REVERSED from before)
+  app.post("/api/orders/:id/verify-kayayo", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      if (req.user!.userType !== 'seller') {
+        return res.status(403).json({ message: "Only sellers can verify kayayo pickup" });
       }
 
       const { verificationCode } = req.body;
       
-      // In a real app, you would verify the code against the seller's generated code
-      // For now, we'll accept any 4-digit code
-      if (!verificationCode || verificationCode.length !== 4) {
+      if (!verificationCode || verificationCode.length !== 6) {
         return res.status(400).json({ message: "Invalid verification code" });
       }
 
@@ -2029,9 +2136,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Order not found" });
       }
 
-      res.json({ message: "Seller verified successfully", verified: true });
+      // Verify code using secure verification
+      const isValid = verifyPickupCode(order.id, 'kayayo', verificationCode);
+
+      if (!isValid) {
+        return res.status(400).json({ message: "Invalid or expired verification code" });
+      }
+
+      res.json({ message: "Kayayo verified successfully", verified: true });
     } catch (error) {
-      console.error('Verify seller error:', error);
+      console.error('Verify kayayo error:', error);
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+
+  // Get Rider's pickup code for display
+  app.get("/api/orders/:id/rider-pickup-code", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      if (req.user!.userType !== 'rider') {
+        return res.status(403).json({ message: "Only riders can view their pickup code" });
+      }
+
+      const order = await storage.getOrder(req.params.id);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      if (order.riderId !== req.user!.userId) {
+        return res.status(403).json({ message: "You can only view codes for your own orders" });
+      }
+
+      const pickupCode = getPickupCode(order.id, 'rider');
+      res.json({ pickupCode });
+    } catch (error) {
+      console.error('Get rider pickup code error:', error);
       res.status(500).json({ message: "Server error" });
     }
   });
@@ -2075,6 +2213,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Kayayo verifies Rider's pickup code and hands over (REVERSED from before)
   app.patch("/api/orders/:id/handover-to-rider", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
       if (req.user!.userType !== 'kayayo') {
@@ -2083,7 +2222,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { riderId, verificationCode } = req.body;
 
-      if (!verificationCode || verificationCode.length !== 4) {
+      if (!verificationCode || verificationCode.length !== 6) {
         return res.status(400).json({ message: "Invalid verification code" });
       }
 
@@ -2096,14 +2235,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "You can only handover your own orders" });
       }
 
-      // Generate expected verification code from order ID (same logic as frontend)
-      const expectedCode = order.id.slice(0, 4).split('').map((char: string) => {
-        const code = char.charCodeAt(0);
-        return (code % 10).toString();
-      }).join('');
+      // Verify code using secure verification
+      const isValid = verifyPickupCode(order.id, 'rider', verificationCode);
 
-      if (verificationCode !== expectedCode) {
-        return res.status(400).json({ message: "Invalid verification code" });
+      if (!isValid) {
+        return res.status(400).json({ message: "Invalid or expired verification code" });
       }
 
       const updatedOrder = await storage.updateOrder(req.params.id, {

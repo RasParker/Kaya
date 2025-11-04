@@ -27,7 +27,8 @@ import {
   MessageCircle,
   PhoneCall,
   Bike,
-  AlertCircle
+  AlertCircle,
+  Eye
 } from "lucide-react";
 import type { Order, OrderItem, Product } from "@shared/schema";
 import { useState } from "react";
@@ -37,8 +38,8 @@ export default function KayayoOrderDetails() {
   const [match, params] = useRoute("/kayayo/order/:orderId");
   const { user } = useAuth();
   const { toast } = useToast();
-  const [verificationCode, setVerificationCode] = useState("");
-  const [showVerificationDialog, setShowVerificationDialog] = useState(false);
+  const [riderVerificationCode, setRiderVerificationCode] = useState("");
+  const [showPickupCodeDialog, setShowPickupCodeDialog] = useState(false);
   const [showRiderHandoverDialog, setShowRiderHandoverDialog] = useState(false);
   const [showCommunicationDialog, setShowCommunicationDialog] = useState(false);
   const [communicationType, setCommunicationType] = useState<"buyer" | "seller" | "rider" | "support">("buyer");
@@ -51,6 +52,11 @@ export default function KayayoOrderDetails() {
   const { data: orderItems = [], isLoading: itemsLoading } = useQuery<(OrderItem & { product: Product })[]>({
     queryKey: [`/api/orders/${params?.orderId}/items`],
     enabled: !!params?.orderId,
+  });
+
+  const { data: pickupCodeData } = useQuery<{ pickupCode: string }>({
+    queryKey: [`/api/orders/${params?.orderId}/kayayo-pickup-code`],
+    enabled: !!params?.orderId && !!order?.kayayoId,
   });
 
   const startShoppingMutation = useMutation({
@@ -85,30 +91,6 @@ export default function KayayoOrderDetails() {
     },
   });
 
-  const verifySellerMutation = useMutation({
-    mutationFn: async (code: string) => {
-      const response = await apiRequest("POST", `/api/orders/${order?.id}/verify-seller`, {
-        verificationCode: code
-      });
-      return response.json();
-    },
-    onSuccess: () => {
-      setShowVerificationDialog(false);
-      setVerificationCode("");
-      toast({
-        title: "Seller verified",
-        description: "Handover from seller confirmed",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Verification failed",
-        description: error.message || "Invalid verification code",
-        variant: "destructive",
-      });
-    },
-  });
-
   const markReadyMutation = useMutation({
     mutationFn: async () => {
       if (!order) throw new Error("No order found");
@@ -137,6 +119,7 @@ export default function KayayoOrderDetails() {
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       queryClient.invalidateQueries({ queryKey: [`/api/orders/${params?.orderId}`] });
       setShowRiderHandoverDialog(false);
+      setRiderVerificationCode("");
       toast({
         title: "Handover successful",
         description: "Order handed over to rider successfully",
@@ -184,12 +167,10 @@ export default function KayayoOrderDetails() {
   const isReady = order.status === 'ready_for_pickup' || order.status === 'ready';
   const inTransit = order.status === 'in_transit';
 
-  // Calculate shopping progress
   const totalItems = orderItems.length;
   const pickedItems = orderItems.filter(item => item.isPicked).length;
   const progressPercentage = totalItems > 0 ? (pickedItems / totalItems) * 100 : 0;
 
-  // Group items by seller
   const itemsBySeller = orderItems.reduce((acc, item) => {
     const sellerKey = item.sellerId;
     if (!acc[sellerKey]) {
@@ -203,7 +184,6 @@ export default function KayayoOrderDetails() {
 
   return (
     <MobileLayout>
-      {/* Header */}
       <header className="sticky top-0 z-10 bg-card border-b border-border p-4">
         <div className="flex items-center gap-3 mb-3">
           <Button
@@ -230,9 +210,7 @@ export default function KayayoOrderDetails() {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="p-4 pb-20 space-y-4">
-        {/* Shopping Progress Bar */}
         {isShopping && (
           <Card className="bg-primary/5">
             <CardContent className="pt-6">
@@ -252,7 +230,6 @@ export default function KayayoOrderDetails() {
           </Card>
         )}
 
-        {/* Communication Card */}
         <Card>
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
@@ -316,33 +293,18 @@ export default function KayayoOrderDetails() {
           </CardContent>
         </Card>
 
-        {/* Buyer Information */}
         <Card>
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
-              <User className="h-5 w-5" />
-              Delivery Information
+              <MapPin className="h-5 w-5" />
+              Delivery Address
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm">{order.deliveryAddress}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Payment:</span>
-                <Badge className="capitalize">{order.paymentMethod || 'Cash'}</Badge>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Your Fee:</span>
-                <span className="font-bold text-primary">₵{parseFloat(order.kayayoFee || "0").toFixed(2)}</span>
-              </div>
-            </div>
+            <p className="text-sm">{order.deliveryAddress}</p>
           </CardContent>
         </Card>
 
-        {/* Shopping Checklist */}
         <Card>
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
@@ -364,7 +326,6 @@ export default function KayayoOrderDetails() {
           </CardContent>
         </Card>
 
-        {/* Market Route */}
         <Card>
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
@@ -384,7 +345,7 @@ export default function KayayoOrderDetails() {
                   <div 
                     key={sellerId} 
                     className={`flex items-center gap-3 p-3 rounded-lg border ${
-                      allPicked ? 'bg-green-50 border-green-200' : 'bg-muted/50'
+                      allPicked ? 'bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800' : 'bg-muted/50'
                     }`}
                   >
                     <div className={`w-8 h-8 rounded-full ${
@@ -419,7 +380,6 @@ export default function KayayoOrderDetails() {
           </CardContent>
         </Card>
 
-        {/* Action Buttons */}
         <div className="space-y-3">
           {canStartShopping && (
             <Button 
@@ -446,11 +406,11 @@ export default function KayayoOrderDetails() {
               <div className="grid grid-cols-2 gap-3">
                 <Button 
                   variant="outline"
-                  onClick={() => setShowVerificationDialog(true)}
-                  data-testid="button-verify-seller"
+                  onClick={() => setShowPickupCodeDialog(true)}
+                  data-testid="button-show-pickup-code"
                 >
-                  <QrCode className="h-4 w-4 mr-2" />
-                  Verify Seller
+                  <Eye className="h-4 w-4 mr-2" />
+                  Show Pickup Code
                 </Button>
                 <Button 
                   variant="outline"
@@ -471,7 +431,7 @@ export default function KayayoOrderDetails() {
 
           {isReady && !inTransit && (
             <div className="space-y-3">
-              <div className="text-center py-4 bg-green-50 rounded-lg border border-green-200">
+              <div className="text-center py-4 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
                 <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-2" />
                 <h3 className="text-lg font-semibold mb-1">All Items Collected!</h3>
                 <p className="text-sm text-muted-foreground">Ready for rider handover</p>
@@ -497,52 +457,52 @@ export default function KayayoOrderDetails() {
         </div>
       </main>
 
-      {/* Seller Verification Dialog */}
-      <Dialog open={showVerificationDialog} onOpenChange={setShowVerificationDialog}>
+      <Dialog open={showPickupCodeDialog} onOpenChange={setShowPickupCodeDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Verify Seller Handover</DialogTitle>
+            <DialogTitle>Your Pickup Code</DialogTitle>
             <DialogDescription>
-              Enter the 4-digit verification code provided by the seller
+              Show this code to the seller when collecting items
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 pt-4">
-            <div>
-              <Label htmlFor="verification-code">Verification Code</Label>
-              <Input
-                id="verification-code"
-                type="text"
-                maxLength={4}
-                placeholder="0000"
-                value={verificationCode}
-                onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))}
-                className="text-center text-2xl tracking-widest"
-                data-testid="input-verification-code"
-              />
+            <div className="bg-primary/10 border border-primary/20 rounded-lg p-6">
+              <p className="text-xs text-muted-foreground mb-3 text-center">Your Pickup Code:</p>
+              <p className="text-5xl font-bold text-primary tracking-widest text-center" data-testid="text-pickup-code">
+                {pickupCodeData?.pickupCode || '000000'}
+              </p>
             </div>
+            
+            <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+              <p className="text-sm font-medium mb-2">Instructions:</p>
+              <ol className="text-sm space-y-1 list-decimal list-inside text-muted-foreground">
+                <li>Show this code to the seller</li>
+                <li>Seller will verify and hand over items</li>
+                <li>Confirm you received all items</li>
+              </ol>
+            </div>
+            
             <Button
               className="w-full"
-              onClick={() => verifySellerMutation.mutate(verificationCode)}
-              disabled={verificationCode.length !== 4 || verifySellerMutation.isPending}
-              data-testid="button-verify-code"
+              onClick={() => setShowPickupCodeDialog(false)}
+              data-testid="button-close-code"
             >
-              {verifySellerMutation.isPending ? 'Verifying...' : 'Verify Handover'}
+              Close
             </Button>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Rider Handover Dialog */}
       <Dialog open={showRiderHandoverDialog} onOpenChange={setShowRiderHandoverDialog}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Handover to Rider</DialogTitle>
             <DialogDescription>
-              Confirm rider identity and enter verification code
+              Ask the rider to show their pickup code, then enter it below to confirm identity
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 pt-4">
-            <div className="bg-blue-50 p-4 rounded-lg">
+            <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg">
               <p className="text-sm font-medium mb-2">Order Summary</p>
               <div className="space-y-1 text-sm">
                 <div className="flex justify-between">
@@ -555,50 +515,49 @@ export default function KayayoOrderDetails() {
                 </div>
               </div>
             </div>
-            <div className="bg-green-50 border border-green-300 rounded-lg p-4">
-              <p className="text-xs text-muted-foreground mb-2 text-center">Expected Rider Code:</p>
-              <p className="text-3xl font-bold text-green-900 tracking-widest text-center" data-testid="text-expected-rider-code">
-                {order.id.slice(0, 4).split('').map((char: string) => {
-                  const code = char.charCodeAt(0);
-                  return (code % 10).toString();
-                }).join('')}
-              </p>
-              <p className="text-xs text-muted-foreground mt-2 text-center">Ask rider to show their pickup code</p>
+
+            <div className="bg-orange-50 dark:bg-orange-950 border border-orange-200 dark:border-orange-800 rounded-lg p-4">
+              <p className="text-sm font-medium mb-2">Instructions:</p>
+              <ol className="text-sm space-y-1 list-decimal list-inside text-muted-foreground">
+                <li>Ask Rider to show their pickup code</li>
+                <li>Enter the 6-digit code below</li>
+                <li>Verify and hand over the items</li>
+              </ol>
             </div>
+            
             <div>
-              <Label htmlFor="rider-code">Enter Rider's Code to Confirm</Label>
+              <Label htmlFor="rider-code">Rider's Pickup Code</Label>
               <Input
                 id="rider-code"
                 type="text"
-                maxLength={4}
-                placeholder="0000"
-                value={verificationCode}
-                onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))}
+                maxLength={6}
+                placeholder="000000"
+                value={riderVerificationCode}
+                onChange={(e) => setRiderVerificationCode(e.target.value.replace(/\D/g, ''))}
                 className="text-center text-2xl tracking-widest"
                 data-testid="input-rider-code"
               />
-              <p className="text-xs text-muted-foreground mt-1">The codes must match to complete handover</p>
             </div>
+            
             <Button
               className="w-full bg-blue-600 hover:bg-blue-700"
               onClick={() => {
                 if (order.riderId) {
                   handoverToRiderMutation.mutate({
                     riderId: order.riderId,
-                    verificationCode
+                    verificationCode: riderVerificationCode
                   });
                 }
               }}
-              disabled={verificationCode.length !== 4 || handoverToRiderMutation.isPending || !order.riderId}
+              disabled={riderVerificationCode.length !== 6 || handoverToRiderMutation.isPending || !order.riderId}
               data-testid="button-confirm-handover"
             >
-              {handoverToRiderMutation.isPending ? 'Processing...' : 'Confirm Handover'}
+              {handoverToRiderMutation.isPending ? 'Processing...' : 'Verify & Hand Over'}
             </Button>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Communication Dialog */}
       <Dialog open={showCommunicationDialog} onOpenChange={setShowCommunicationDialog}>
         <DialogContent>
           <DialogHeader>
@@ -651,7 +610,7 @@ function ShoppingItemCard({ item, canCheck, onToggle }: {
   onToggle: (isPicked: boolean) => void;
 }) {
   return (
-    <div className={`border rounded-lg p-3 ${item.isPicked ? 'bg-green-50 border-green-200' : 'bg-white'}`}>
+    <div className={`border rounded-lg p-3 ${item.isPicked ? 'bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800' : 'bg-white dark:bg-gray-900'}`}>
       <div className="flex items-start gap-3">
         <Checkbox 
           checked={item.isPicked || false}
@@ -694,13 +653,16 @@ function ShoppingItemCard({ item, canCheck, onToggle }: {
 function getStatusColor(status: string) {
   switch (status) {
     case 'kayayo_accepted':
-      return 'bg-blue-100 text-blue-800';
+      return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
     case 'shopping':
-      return 'bg-orange-100 text-orange-800';
+      return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200';
     case 'ready':
-      return 'bg-purple-100 text-purple-800';
+    case 'ready_for_pickup':
+      return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200';
+    case 'in_transit':
+      return 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-200';
     default:
-      return 'bg-gray-100 text-gray-800';
+      return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
   }
 }
 
@@ -711,8 +673,11 @@ function getStatusLabel(status: string) {
     case 'shopping':
       return 'Shopping';
     case 'ready':
+    case 'ready_for_pickup':
       return 'Ready for Pickup';
+    case 'in_transit':
+      return 'In Transit';
     default:
-      return status;
+      return status.replace(/_/g, ' ');
   }
 }
