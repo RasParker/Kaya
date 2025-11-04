@@ -270,26 +270,29 @@ export default function Cart() {
                     <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
                       <User className="h-4 w-4 text-primary" />
                     </div>
-                    <div className="flex-1">
-                      <CardTitle className="text-sm">
-                        {seller?.stallName || `Seller ${sellerId.slice(0, 8)}`}
-                      </CardTitle>
-                      {seller && (
-                        <div className="flex items-center gap-2 mt-1">
-                          <div className="flex items-center gap-1">
-                            <Star className="h-3 w-3 text-yellow-500" />
-                            <span className="text-xs text-muted-foreground">
-                              {parseFloat(seller.user.rating || "0").toFixed(1)}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <MapPin className="h-3 w-3 text-muted-foreground" />
-                            <span className="text-xs text-muted-foreground">
-                              {seller.stallLocation}
-                            </span>
-                          </div>
-                        </div>
-                      )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <CardTitle className="text-sm">
+                          {seller?.stallName || `Seller ${sellerId.slice(0, 8)}`}
+                        </CardTitle>
+                        {seller && (
+                          <>
+                            <div className="flex items-center gap-1">
+                              <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
+                              <span className="text-xs text-muted-foreground">
+                                {parseFloat(seller.user.rating || "0").toFixed(1)}
+                              </span>
+                            </div>
+                            <span className="text-xs text-muted-foreground">•</span>
+                            <div className="flex items-center gap-1">
+                              <MapPin className="h-3 w-3 text-muted-foreground" />
+                              <span className="text-xs text-muted-foreground">
+                                {seller.stallLocation}
+                              </span>
+                            </div>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </CardHeader>
