@@ -42,6 +42,28 @@ export default function SellerOrderDetails() {
     enabled: !!params?.orderId,
   });
 
+  const confirmItemMutation = useMutation({
+    mutationFn: async (itemId: string) => {
+      const response = await apiRequest("PATCH", `/api/orders/${order?.id}/items/${itemId}/confirm`, {});
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/orders/${params?.orderId}/items`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/orders/${params?.orderId}`] });
+      toast({
+        title: "Item confirmed",
+        description: "Item has been marked as ready for handover.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to confirm item",
+        description: error.message || "Could not confirm item",
+        variant: "destructive",
+      });
+    },
+  });
+
   const verifyKayayoMutation = useMutation({
     mutationFn: async (code: string) => {
       const response = await apiRequest("POST", `/api/orders/${order?.id}/verify-kayayo`, {
@@ -193,36 +215,52 @@ export default function SellerOrderDetails() {
           <CardContent>
             <div className="space-y-3">
               {orderItems.map((item) => (
-                <div key={item.id} className="flex gap-3 border-b pb-3 last:border-0" data-testid={`order-item-${item.id}`}>
-                  {item.product?.image && (
-                    <img
-                      src={item.product.image}
-                      alt={item.product.name}
-                      className="w-16 h-16 object-cover rounded"
-                      data-testid={`img-product-${item.id}`}
-                    />
+                <div key={item.id} className="border-b pb-3 last:border-0" data-testid={`order-item-${item.id}`}>
+                  <div className="flex gap-3">
+                    {item.product?.image && (
+                      <img
+                        src={item.product.image}
+                        alt={item.product.name}
+                        className="w-16 h-16 object-cover rounded"
+                        data-testid={`img-product-${item.id}`}
+                      />
+                    )}
+                    <div className="flex-1">
+                      <h3 className="font-semibold" data-testid={`text-product-name-${item.id}`}>
+                        {item.product?.name || 'Unknown Product'}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        Quantity: {item.quantity} × ₵{parseFloat(item.unitPrice).toFixed(2)}
+                      </p>
+                      {item.notes && (
+                        <p className="text-xs text-muted-foreground mt-1">Note: {item.notes}</p>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold text-primary" data-testid={`text-subtotal-${item.id}`}>
+                        ₵{parseFloat(item.subtotal).toFixed(2)}
+                      </p>
+                      {item.isConfirmed && (
+                        <Badge variant="outline" className="mt-1 text-xs" data-testid={`badge-confirmed-${item.id}`}>
+                          <CheckCircle className="h-3 w-3 mr-1" />
+                          Confirmed
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {!item.isConfirmed && canHandover && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full mt-2"
+                      onClick={() => confirmItemMutation.mutate(item.id)}
+                      disabled={confirmItemMutation.isPending}
+                      data-testid={`button-confirm-item-${item.id}`}
+                    >
+                      {confirmItemMutation.isPending ? 'Confirming...' : 'Confirm Item'}
+                    </Button>
                   )}
-                  <div className="flex-1">
-                    <h3 className="font-semibold" data-testid={`text-product-name-${item.id}`}>
-                      {item.product?.name || 'Unknown Product'}
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      Quantity: {item.quantity} × ₵{parseFloat(item.unitPrice).toFixed(2)}
-                    </p>
-                    {item.notes && (
-                      <p className="text-xs text-muted-foreground mt-1">Note: {item.notes}</p>
-                    )}
-                  </div>
-                  <div className="text-right">
-                    <p className="font-bold text-primary" data-testid={`text-subtotal-${item.id}`}>
-                      ₵{parseFloat(item.subtotal).toFixed(2)}
-                    </p>
-                    {item.isConfirmed && (
-                      <Badge variant="outline" className="mt-1 text-xs" data-testid={`badge-confirmed-${item.id}`}>
-                        Confirmed
-                      </Badge>
-                    )}
-                  </div>
                 </div>
               ))}
             </div>
