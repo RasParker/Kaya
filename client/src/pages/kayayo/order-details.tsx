@@ -418,13 +418,21 @@ export default function KayayoOrderDetails() {
                 </Button>
               </div>
               
+              {!order.kayayoVerified && progressPercentage === 100 && (
+                <div className="bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
+                  <p className="text-sm text-yellow-800 dark:text-yellow-200 text-center">
+                    Waiting for seller to verify your pickup code before marking ready
+                  </p>
+                </div>
+              )}
+              
               <Button 
                 className="w-full h-12"
                 onClick={() => markReadyMutation.mutate()}
-                disabled={markReadyMutation.isPending || progressPercentage < 100}
+                disabled={markReadyMutation.isPending || progressPercentage < 100 || !order.kayayoVerified}
                 data-testid="button-mark-ready"
               >
-                {markReadyMutation.isPending ? 'Updating...' : progressPercentage < 100 ? 'Complete All Items First' : 'Mark Ready for Pickup'}
+                {markReadyMutation.isPending ? 'Updating...' : progressPercentage < 100 ? 'Complete All Items First' : !order.kayayoVerified ? 'Awaiting Seller Verification' : 'Mark Ready for Pickup'}
               </Button>
             </>
           )}

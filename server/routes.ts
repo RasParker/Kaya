@@ -2146,6 +2146,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid or expired verification code" });
       }
 
+      // Mark kayayo as verified
+      const updatedOrder = await storage.updateOrder(req.params.id, {
+        kayayoVerified: true
+      });
+
+      if (updatedOrder) {
+        // Broadcast to kayayo
+        if (updatedOrder.kayayoId) {
+          broadcastToUser(updatedOrder.kayayoId, {
+            type: 'KAYAYO_VERIFIED',
+            order: updatedOrder
+          });
+        }
+      }
+
       res.json({ message: "Kayayo verified successfully", verified: true });
     } catch (error) {
       console.error('Verify kayayo error:', error);
