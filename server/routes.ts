@@ -75,9 +75,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     expiresAt: number;
     used: boolean;
   }
-  
+
   const pickupCodes = new Map<string, PickupCode>();
-  
+
   // Cleanup expired codes every 5 minutes
   setInterval(() => {
     const now = Date.now();
@@ -88,28 +88,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     }
   }, 5 * 60 * 1000);
-  
+
   // Generate secure random 6-digit code
   const generateSecurePickupCode = (): string => {
     const bytes = randomBytes(3);
     const num = bytes.readUIntBE(0, 3) % 1000000;
     return num.toString().padStart(6, '0');
   };
-  
+
   // Get or create pickup code
   const getPickupCode = (orderId: string, role: 'kayayo' | 'rider'): string => {
     const key = `${orderId}:${role}`;
     let existing = pickupCodes.get(key);
-    
+
     // Return existing code if valid and not used
     if (existing && existing.expiresAt > Date.now() && !existing.used) {
       return existing.code;
     }
-    
+
     // Generate new code
     const code = generateSecurePickupCode();
     const expiresAt = Date.now() + (30 * 60 * 1000); // 30 minutes
-    
+
     pickupCodes.set(key, {
       code,
       orderId,
@@ -117,42 +117,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
       expiresAt,
       used: false
     });
-    
+
     return code;
   };
-  
+
   // Verify and invalidate pickup code
   const verifyPickupCode = (orderId: string, role: 'kayayo' | 'rider', code: string): boolean => {
     const key = `${orderId}:${role}`;
     const stored = pickupCodes.get(key);
-    
+
     console.log('Verifying pickup code:', { orderId, role, code, stored: stored ? { code: stored.code, used: stored.used, expired: stored.expiresAt < Date.now() } : null });
-    
+
     if (!stored) {
       console.log('No code found for key:', key);
       return false;
     }
-    
+
     if (stored.expiresAt < Date.now()) {
       console.log('Code expired');
       pickupCodes.delete(key);
       return false;
     }
-    
+
     if (stored.used) {
       console.log('Code already used');
       return false;
     }
-    
+
     if (stored.code !== code) {
       console.log('Code mismatch - expected:', stored.code, 'got:', code);
       return false;
     }
-    
+
     // Mark as used
     stored.used = true;
     pickupCodes.set(key, stored);
-    
+
     console.log('Code verified successfully');
     return true;
   };
@@ -313,7 +313,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (name !== undefined) updateData.name = name;
       if (phone !== undefined) updateData.phone = phone;
       if (email !== undefined) updateData.email = email;
-      
+
       // Handle profile image upload
       if (profileImage !== undefined) {
         if (profileImage === null || profileImage === "") {
@@ -411,7 +411,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/sellers/:id", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
       const sellerId = req.params.id;
-      
+
       // Get the seller to verify ownership
       const seller = await storage.getSeller(sellerId);
       if (!seller) {
@@ -440,7 +440,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const { sellerId, category, search } = req.query;
 
     let result;
-    
+
     if (sellerId) {
       result = await storage.getProductsBySeller(sellerId as string);
     } else if (category) {
@@ -464,12 +464,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Product creation request:", JSON.stringify(req.body));
       const productData = insertProductSchema.parse(req.body);
       console.log("Parsed product data:", productData);
-      
+
       if (productData.image && productData.image.startsWith('data:')) {
         console.log("Uploading main image to Cloudinary...");
         productData.image = await uploadImageToCloudinary(productData.image, 'makola-connect/products');
       }
-      
+
       if (productData.images && Array.isArray(productData.images) && productData.images.length > 0) {
         const base64Images = productData.images.filter((img: string) => img.startsWith('data:'));
         if (base64Images.length > 0) {
@@ -479,7 +479,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           productData.images = [...cloudinaryUrls, ...nonBase64Images];
         }
       }
-      
+
       const product = await storage.createProduct(productData);
       console.log("Product created successfully:", product.id);
       res.json(product);
@@ -500,12 +500,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/products/:id", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
       const updateData = { ...req.body };
-      
+
       if (updateData.image && updateData.image.startsWith('data:')) {
         console.log("Uploading main image to Cloudinary...");
         updateData.image = await uploadImageToCloudinary(updateData.image, 'makola-connect/products');
       }
-      
+
       if (updateData.images && Array.isArray(updateData.images) && updateData.images.length > 0) {
         const base64Images = updateData.images.filter((img: string) => img.startsWith('data:'));
         if (base64Images.length > 0) {
@@ -515,7 +515,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           updateData.images = [...cloudinaryUrls, ...nonBase64Images];
         }
       }
-      
+
       const product = await storage.updateProduct(req.params.id, updateData);
       if (!product) {
         return res.status(404).json({ message: "Product not found" });
@@ -638,7 +638,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!existingAddress || existingAddress.userId !== req.user!.userId) {
         return res.status(404).json({ message: "Address not found" });
       }
-      
+
       const { userId, id, createdAt, ...allowedUpdates } = req.body;
       const address = await storage.updateDeliveryAddress(req.params.id, allowedUpdates);
       res.json(address);
@@ -653,7 +653,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!existingAddress || existingAddress.userId !== req.user!.userId) {
         return res.status(404).json({ message: "Address not found" });
       }
-      
+
       const success = await storage.deleteDeliveryAddress(req.params.id);
       res.json({ success: true });
     } catch (error) {
@@ -667,7 +667,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!existingAddress || existingAddress.userId !== req.user!.userId) {
         return res.status(404).json({ message: "Address not found" });
       }
-      
+
       await storage.setDefaultAddress(req.user!.userId, req.params.id);
       res.json({ success: true });
     } catch (error) {
@@ -711,7 +711,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/orders", authenticateToken, async (req: AuthenticatedRequest, res) => {
+  app.post("/api/orders", authenticateToken, async (req, res) => {
     console.log("Order creation started for user:", req.user!.userId);
     console.log("Request body:", JSON.stringify(req.body));
     try {
@@ -805,7 +805,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // For kayayos, riders, and others, return all pending orders
         orders = await storage.getPendingOrders();
       }
-      
+
       res.json(orders);
     } catch (error) {
       res.status(500).json({ message: "Server error" });
@@ -1167,7 +1167,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const orderItems = await storage.getOrderItemsByOrder(req.params.id);
       const hasSellerItems = orderItems.some(item => item.sellerId === sellerProfile.id);
-      
+
       if (!hasSellerItems) {
         return res.status(403).json({ message: "You don't have items in this order" });
       }
@@ -1537,7 +1537,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/kayayos/available", async (req, res) => {
     try {
       const market = req.query.market as string || 'Makola';
-      
+
       // Get all kayayos for the market
       const allKayayos = await storage.getAvailableKayayos(market);
 
@@ -2155,7 +2155,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { verificationCode } = req.body;
-      
+
       if (!verificationCode || verificationCode.length !== 6) {
         return res.status(400).json({ message: "Invalid verification code" });
       }
