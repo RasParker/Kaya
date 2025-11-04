@@ -4,6 +4,13 @@ This is a marketplace application called "rest-express" designed for connecting 
 
 ## Recent Changes
 
+**2025-11-04**: Fixed rider pickup code and order visibility issues
+- Fixed rider deliveries page showing fake 4-digit pickup codes instead of real 6-digit codes from backend
+- Removed incorrect client-side code generation in Available and Active delivery cards
+- Fixed rider order list to include both assigned orders AND available orders (status: ready_for_pickup, no rider assigned)
+- Created new storage method `getOrdersForRider()` that returns combined list of assigned and available orders
+- Riders can now see available delivery orders in their deliveries list and get proper 6-digit pickup codes
+
 **2025-10-08**: UI/UX improvements and bug fixes
 - Fixed kayayo page blank issue in cart - resolved React hooks being called conditionally causing rendering errors
 - Fixed delivery address save functionality - delivery_addresses table schema properly migrated to database
