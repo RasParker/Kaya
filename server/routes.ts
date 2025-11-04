@@ -126,20 +126,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const key = `${orderId}:${role}`;
     const stored = pickupCodes.get(key);
     
+    console.log('Verifying pickup code:', { orderId, role, code, stored: stored ? { code: stored.code, used: stored.used, expired: stored.expiresAt < Date.now() } : null });
+    
     if (!stored) {
+      console.log('No code found for key:', key);
       return false;
     }
     
     if (stored.expiresAt < Date.now()) {
+      console.log('Code expired');
       pickupCodes.delete(key);
       return false;
     }
     
     if (stored.used) {
+      console.log('Code already used');
       return false;
     }
     
     if (stored.code !== code) {
+      console.log('Code mismatch - expected:', stored.code, 'got:', code);
       return false;
     }
     
@@ -147,6 +153,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     stored.used = true;
     pickupCodes.set(key, stored);
     
+    console.log('Code verified successfully');
     return true;
   };
 
