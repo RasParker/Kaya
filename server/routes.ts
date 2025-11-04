@@ -1691,6 +1691,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete("/api/admin/orders/:id", authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      // Verify admin user
+      if (req.user!.userType !== 'admin') {
+        return res.status(403).json({ message: "Unauthorized: Admin access required" });
+      }
+
+      const success = await storage.deleteOrder(req.params.id);
+      if (!success) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      res.json({ message: "Order deleted successfully" });
+    } catch (error) {
+      console.error('Delete order error:', error);
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+
   app.get("/api/admin/stats", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
       // Verify admin user

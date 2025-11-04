@@ -66,6 +66,7 @@ export interface IStorage {
   getOrder(id: string): Promise<Order | undefined>;
   createOrder(order: InsertOrder): Promise<Order>;
   updateOrder(id: string, order: Partial<Order>): Promise<Order | undefined>;
+  deleteOrder(id: string): Promise<boolean>;
   acceptDeliveryAsRider(orderId: string, riderId: string): Promise<Order | undefined>;
   getOrdersByBuyer(buyerId: string): Promise<Order[]>;
   getOrdersBySeller(sellerId: string): Promise<Order[]>;
@@ -201,8 +202,7 @@ export class PostgresStorage implements IStorage {
   }
 
   async deleteProduct(id: string): Promise<boolean> {
-    const result = await this.db.delete(schema.products).where(eq(schema.products.id, id));
-    return result.rowCount ? result.rowCount > 0 : false;
+    return this.products.delete(id);
   }
 
   async getProductsBySeller(sellerId: string): Promise<Product[]> {
@@ -258,6 +258,11 @@ export class PostgresStorage implements IStorage {
     return result[0];
   }
 
+  async deleteOrder(id: string): Promise<boolean> {
+    const result = await this.db.delete(schema.orders).where(eq(schema.orders.id, id));
+    return result.rowCount ? result.rowCount > 0 : false;
+  }
+
   async acceptDeliveryAsRider(orderId: string, riderId: string): Promise<Order | undefined> {
     const result = await this.db
       .update(schema.orders)
@@ -304,7 +309,7 @@ export class PostgresStorage implements IStorage {
       .innerJoin(schema.orderItems, eq(schema.orders.id, schema.orderItems.orderId))
       .innerJoin(schema.products, eq(schema.orderItems.productId, schema.products.id))
       .where(eq(schema.products.sellerId, sellerId));
-    
+
     return result;
   }
 
@@ -357,7 +362,7 @@ export class PostgresStorage implements IStorage {
         eq(schema.products.sellerId, sellerId),
         eq(schema.orders.status, 'pending')
       ));
-    
+
     return result;
   }
 
