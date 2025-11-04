@@ -394,15 +394,6 @@ export default function KayayoOrderDetails() {
 
           {isShopping && (
             <>
-              <Button 
-                className="w-full h-12"
-                onClick={() => markReadyMutation.mutate()}
-                disabled={markReadyMutation.isPending || progressPercentage < 100}
-                data-testid="button-mark-ready"
-              >
-                {markReadyMutation.isPending ? 'Updating...' : progressPercentage < 100 ? 'Complete All Items First' : 'Mark Ready for Pickup'}
-              </Button>
-              
               <div className="grid grid-cols-2 gap-3">
                 <Button 
                   variant="outline"
@@ -426,6 +417,15 @@ export default function KayayoOrderDetails() {
                   Photo Proof
                 </Button>
               </div>
+              
+              <Button 
+                className="w-full h-12"
+                onClick={() => markReadyMutation.mutate()}
+                disabled={markReadyMutation.isPending || progressPercentage < 100}
+                data-testid="button-mark-ready"
+              >
+                {markReadyMutation.isPending ? 'Updating...' : progressPercentage < 100 ? 'Complete All Items First' : 'Mark Ready for Pickup'}
+              </Button>
             </>
           )}
 
