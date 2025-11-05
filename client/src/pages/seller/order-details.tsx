@@ -54,15 +54,15 @@ export default function SellerOrderDetails() {
       queryClient.invalidateQueries({ queryKey: [`/api/orders/${params?.orderId}`] });
       setConfirmingItemId(null);
       toast({
-        title: "Item confirmed",
+        title: "Item marked as ready",
         description: "Item has been marked as ready for handover.",
       });
     },
     onError: (error: any) => {
       setConfirmingItemId(null);
       toast({
-        title: "Failed to confirm item",
-        description: error.message || "Could not confirm item",
+        title: "Failed to mark item as ready",
+        description: error.message || "Could not mark item as ready",
         variant: "destructive",
       });
     },
@@ -247,7 +247,7 @@ export default function SellerOrderDetails() {
                       {item.isConfirmed && (
                         <Badge variant="outline" className="mt-1 text-xs" data-testid={`badge-confirmed-${item.id}`}>
                           <CheckCircle className="h-3 w-3 mr-1" />
-                          Confirmed
+                          Ready
                         </Badge>
                       )}
                     </div>
@@ -262,7 +262,7 @@ export default function SellerOrderDetails() {
                       disabled={confirmingItemId === item.id}
                       data-testid={`button-confirm-item-${item.id}`}
                     >
-                      {confirmingItemId === item.id ? 'Confirming...' : 'Confirm Item'}
+                      {confirmingItemId === item.id ? 'Marking as Ready...' : 'Mark as Ready'}
                     </Button>
                   )}
                 </div>
@@ -283,7 +283,7 @@ export default function SellerOrderDetails() {
               {!allItemsConfirmed && (
                 <div className="bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
                   <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                    Please confirm all items before handing over to Kayayo
+                    Please mark all items as ready before handing over to Kayayo
                   </p>
                 </div>
               )}
