@@ -42,7 +42,7 @@ export default function RiderDeliveries() {
       }
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data, orderId) => {
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       toast({
         title: "Delivery accepted",
@@ -203,7 +203,9 @@ export default function RiderDeliveries() {
                   key={order.id} 
                   order={order} 
                   onAccept={() => acceptDeliveryMutation.mutate(order.id)}
-                  isAccepting={acceptDeliveryMutation.isPending && acceptDeliveryMutation.variables === order.id}
+                  isAccepting={acceptDeliveryMutation.isPending}
+                  orderId={order.id}
+                  pendingOrderId={acceptDeliveryMutation.variables}
                 />
               ))
             )}
@@ -290,8 +292,9 @@ function ActiveDeliveryCard({ order, onComplete, isCompleting }: any) {
   );
 }
 
-function AvailableDeliveryCard({ order, onAccept, isAccepting }: any) {
+function AvailableDeliveryCard({ order, onAccept, isAccepting, orderId, pendingOrderId }: any) {
   const [, setLocation] = useLocation();
+  const isThisButtonLoading = isAccepting && pendingOrderId === orderId;
 
   return (
     <Card data-testid={`available-delivery-${order.id}`}>
@@ -329,10 +332,10 @@ function AvailableDeliveryCard({ order, onAccept, isAccepting }: any) {
           size="sm" 
           className="w-full"
           onClick={onAccept}
-          disabled={isAccepting}
+          disabled={isThisButtonLoading}
           data-testid={`button-accept-delivery-${order.id}`}
         >
-          {isAccepting ? 'Accepting...' : 'Accept Delivery'}
+          {isThisButtonLoading ? 'Accepting...' : 'Accept Delivery'}
         </Button>
       </CardContent>
     </Card>
