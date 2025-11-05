@@ -4,6 +4,12 @@ This is a marketplace application called "rest-express" designed for connecting 
 
 ## Recent Changes
 
+**2025-11-05**: Fixed rider delivery acceptance button behavior
+- Fixed "Accept Delivery" button state tracking issue where all buttons responded simultaneously
+- Each button now tracks its own loading state independently using orderId comparison
+- Only the clicked button shows "Accepting..." state while others remain interactive
+- Database cleanup: Removed all test orders except c50933c6-efbc-42ae-ae80-4fc9ccfdce18 for fresh testing
+
 **2025-11-04**: Fixed rider pickup code and order visibility issues
 - Fixed rider deliveries page showing fake 4-digit pickup codes instead of real 6-digit codes from backend
 - Removed incorrect client-side code generation in Available and Active delivery cards
